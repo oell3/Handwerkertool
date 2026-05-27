@@ -1,0 +1,12 @@
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+
+}
+a{
+  text-decoration: none;
+  text-decoration-line: none;
+  color: #000;
+}

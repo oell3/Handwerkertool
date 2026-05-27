@@ -1,0 +1,46 @@
+<%- include('partials/navbar') %>
+
+
+   
+
+<h1>Heutige Route</h1>
+
+<p>📏 Strecke: <%= distanceKm %> km</p>
+<p>🚗 Fahrzeit: <%= durationMin %> Minuten</p>
+<p>⏱️ Pufferzeit: <%= totalBuffer %> Minuten</p>
+<p>🧮 Gesamtzeit: <%= totalTime %> Minuten</p>
+
+<ul>
+    <% termine.forEach(t => { %>
+        <li><%= t.name %></li>
+    <% }) %>
+</ul>
+
+<div id="map"></div>
+
+
+
+    </div>
+
+
+</body>
+
+    <script>
+    const map = L.map('map').setView([50.83, 12.92], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const route = <%- JSON.stringify(route) %>;
+
+    const routeLine = L.geoJSON(route).addTo(map);
+
+    map.fitBounds(routeLine.getBounds());
+
+    const termine = <%- JSON.stringify(termine) %>;
+
+    termine.forEach(t => {
+        L.marker([t.lat, t.lng]).addTo(map)
+            .bindPopup(t.name);
+    });
+</script>
+</html>

@@ -1,0 +1,15 @@
+@use "base/variables" as v;
+@use "base/base";
+@use "layout/layout";
+@use "table/table";
+@use "components/components";
+@use "state/drag";
+@use "components/calc";
+@use "components/ql-editor";
+@use "components/ts-wrapper";
+@use "layout/nav";
+@use "components/helpers";
+
+//Kompilieren mit sass scss/main.scss css/style.css --watch
+
+//davor npm install -g sass falls sass nicht installiert

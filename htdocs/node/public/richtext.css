@@ -1,0 +1,72 @@
+/* Textarea von Angeotserstellung */
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1px;
+}
+.option-button {
+  height: 4px;
+  width: 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  border: none;
+  background-color: #ffffff;
+  outline: none;
+  color: #020929;
+}
+select {
+  padding: 1px;
+  border: 1px solid #020929;
+  border-radius: 3px;
+}
+.options label,
+.options select {
+  font-family: "Poppins", sans-serif;
+}
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+input[type="color"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-color: transparent;
+  width: 20px;
+  height: 14px;
+  border: none;
+  cursor: pointer;
+}
+input[type="color"]::-webkit-color-swatch {
+  border-radius: 15px;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px #020929;
+}
+input[type="color"]::-moz-color-swatch {
+  border-radius: 15px;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 3px #020929;
+}
+#text-input {
+  margin-top: 10px;
+  border: 1px solid #dddddd;
+  padding: 20px;
+  height: 20vh;
+}
+.active {
+  background-color: #e0e9ff;
+}
+
+.table-light{
+  --bs-table-color:#000;
+  --bs-table-bg:#f8f9fa;
+  --bs-table-border-color:#c6c7c8;
+  --bs-table-striped-bg:#ecedee;
+  --bs-table-striped-color:#000;
+  --bs-table-active-bg:#dfe0e1;
+  --bs-table-active-color:#000;
+  --bs-table-hover-bg:#e5e6e7;
+  --bs-table-hover-color:#000;color:var(--bs-table-color);border-color:var(--bs-table-border-color)
+}
+ 

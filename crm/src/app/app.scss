@@ -1,0 +1,30 @@
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: #e7eef7;
+  color: #111827;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.container-left {
+  position: sticky;
+  top: 0;
+  align-self: start;
+}
+
+.container-right {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 100vh;
+}

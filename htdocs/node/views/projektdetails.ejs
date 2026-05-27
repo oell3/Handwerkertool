@@ -1,0 +1,217 @@
+<%- include ('partials/header') %>
+    <%- include ('partials/navbar') %>
+        <div class="container" style="width:100wv;">
+            <div class="" style="display:block;">
+                <h1>
+                    <%= projekt.Name %>
+                </h1>
+                <button style="float:right;"> Hinzufügen </button>
+              
+
+            </div>
+
+            
+
+            <div class="row">
+                <div class="">
+                    <div class="container rundung border-bottom">
+                        <div id="projektnummer" class="container">
+                            Projektnummer
+                            <div id="Projektnummer">
+                                <%= projekt.ID %>
+                            </div>
+                        </div>
+
+                        <div id="Projekteingang" class="container">
+                            Projekteingang
+                            <div id="projektdatumeingang">
+                                <%= projektdetails.datum_formatiert %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="container border-bottom">
+                        <h3>Projektbeschreibung</h3>
+                        <div id="projektbeschreibung">
+                            <%= projektdetails.Beschreibung %>
+                        </div>
+                    </div>
+
+                    <div id="Ansprechpartner" class="border-bottom">
+                        <h3>Ansprechpartner</h3>
+                        <div class="Anschprechpartner-name">
+                            <%= ansprechpartner.Anrede %>
+                                <%= ansprechpartner.Vorname %>
+                                    <%= ansprechpartner.Name %>
+                        </div>
+                        <div class="Ansprechpartner-Telefon">
+                            <%= ansprechpartner.Telefon %>
+                        </div>
+                        <div class="ansprechpartner-Mobil">
+                            <%=ansprechpartner.Mobil %>
+                        </div>
+                        <div class="ansprechpartner-Mail">
+                            <%=ansprechpartner.Mail %>
+                        </div>
+
+                         </div>
+                        <div class="border-bottm"id="ausfuerungsort" onclick="window.location='/objektverwaltung/<%= objekt.ID %>'" style="cursor: pointer;">
+                            <h3>Ausführungsort</h3>
+                            <%= objekt.Adresse %>
+                                <%= objekt.PLZ %>
+                                    <%= objekt.Stadt %>
+                       
+                        </div>
+
+                        <div id="mapshow" style=" height: 300px; width: 300px; box-sizing: border-box;"></div>
+                   
+
+                    <div class="container border-bottom" onclick="window.location='/kunden/<%= kunde.ID %>'" style="cursor: pointer;">
+                        <h3>Auftraggeber</h3>
+                        <div id="Kundenname">
+                            <%= kunde.Name %>
+                        </div>
+                        <div id="Kundenadresse">
+                            <%= kunde.Adresse %>
+                        </div>
+                        <div id="Kundenadresse">
+                            <%= kunde.PLZ %>
+                                <%= kunde.Stadt %>
+                        </div>
+                        <div id="Kundenmail">
+                            <%= kunde.mail %>
+                        </div>
+
+                        
+                    </div>
+
+                </div>
+                <div class="container border-bottom">
+
+                    <div id="termine">
+                        <h3>Termine</h3>
+                        <table class="table">
+                            <thead>
+                                <th>Datum</th>
+                                <th>Status</th>
+                                <th>Typ</th>
+                            </thead>
+                            <tbody>
+
+                                <% termine.forEach((item)=>{ %>
+
+                                    <tr onclick="window.location='/termine/<%= item.ID %>'" style="cursor: pointer;">
+                                        <td>
+                                            <%= item.datum_formatiert %>
+                                        </td>
+                                        <td>
+                                            <%= item.Status %>
+                                        </td>
+                                        <td>
+                                            <%= item.Typ %>
+                                        </td>
+                                    </tr>
+                                    <% });%>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="angebote">
+                        <h3>Angebote</h3>
+                        <table class="table">
+                            <thead>
+                                <th>Datum</th>
+                                <th>Angebotsnummer</th>
+                                <th>Betrag</th>
+                                <th>Status</th>
+                            </thead>
+                            <tbody>
+
+                                <% angebote.forEach((item)=>{ %>
+
+                                    <tr onclick="window.location='/angebote/<%= item.ID %>'" style="cursor: pointer;">
+                                        <td>
+                                            <%= item.datum_formatiert %>
+                                        </td>
+                                        <td>
+                                            <%= item.ID %>
+                                        </td>
+                                        <td>
+                                            <%= item.Betrag %>
+                                        </td>
+                                        <td>
+                                            <%= item.Status %>
+                                        </td>
+                                    </tr>
+                                    <% });%>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="rechnungen">
+                        <h3>Rechnungen</h3>
+                        <table class="table">
+                            <thead>
+                                <th>Datum</th>
+                                <th>Nummer</th>
+                                <th>Status</th>
+                                <th>Betrag</th>
+                            </thead>
+                            <tbody>
+
+                                <% rechnungen.forEach((item)=>{ %>
+
+                                    <tr onclick="window.location='/rechnungen/<%= item.ID %>'" style="cursor: pointer;">
+                                        <td>
+                                            <%= item.datum_formatiert %>
+                                        </td>
+                                        <td>
+                                            <%= item.ID %>
+                                        </td>
+                                        <td>
+                                            <%= item.Status %>
+                                        </td>
+                                        <td>
+                                            <%= item.Betrag %>
+                                        </td>
+                                    </tr>
+                                    <% });%>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="border-bottom" id="ausgaben">
+                            bisher noch keine ausgaben!
+                    </div>
+
+                    <div class="border-bottom" id="dokumente">
+                        bisher noch keine dokumente!
+                    </div>
+                </div>
+
+            </div>
+        </div>
+        </body>
+        <script>
+
+
+            const cords = {
+                lat: <%= projektdetails.lat %>,
+                lng: <%= projektdetails.lon %> 
+            };  
+            if(cords.length === 0){
+                document.getElementsByClassName('mapshow').textContent = "Es konnte kein Karte zu dem Ausführungsort angeladen werden!"
+            }else{
+                 let mapshow = L.map('mapshow').setView([cords.lat, cords.lng], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png')
+                .addTo(mapshow);
+
+            L.marker([cords.lat, cords.lng]).addTo(mapshow);
+            }
+
+           
+
+        </script>
+
+        </html>

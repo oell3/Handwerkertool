@@ -1,0 +1,21 @@
+@use "../base/variables" as v;
+
+.ql-editor {
+    line-height: 1.6;
+    min-height: calc(1.6em * 8);
+    font-size: 16px;
+    
+    &:focus{
+        outline: none; 
+    border-color: v.$blue;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+}
+
+.ql-toolbar {
+    margin-top: 10px;
+}
+
+.ql-container {
+    margin-bottom: 10px;
+}

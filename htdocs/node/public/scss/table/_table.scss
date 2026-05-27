@@ -1,0 +1,64 @@
+@use "../base/variables" as v;
+
+tr:hover td {
+  background: v.$hover-bg;
+}
+
+.group-header td {
+  background: whitesmoke;
+  font-weight: bold;
+}
+
+.group-header.minimized {
+  background: v.$gray-50;
+  opacity: 0.85;
+}
+
+.mischposition,
+.gruppe td {
+  background: linear-gradient(90deg, #eef6ff, #f8fbff);
+  font-weight: 600;
+  border-left: 2px solid;
+}
+
+.misch-child td:first-child {
+  padding-left: 40px;
+}
+
+.gruppe-child td:first-child {
+  padding-left: 40px;
+}
+
+.m, .ek, .aufschlag, .rabatt {
+  display: flex;
+  justify-self: center;
+  width: 50px;
+}
+
+.art, .ep, .gp, .bezeichnung, .remove{
+  display:flex;
+  justify-self: center;
+}
+.c{
+width:fit-content;
+}
+
+tr.dragging {
+    opacity: 0.5;
+}
+
+tr.drag-over {
+    outline: 2px dashed #007bff;
+}
+
+.drop-top {
+    border-top: 3px solid #4CAF50;
+}
+
+.drop-middle {
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.drop-bottom {
+    border-bottom: 3px solid #4CAF50;
+}

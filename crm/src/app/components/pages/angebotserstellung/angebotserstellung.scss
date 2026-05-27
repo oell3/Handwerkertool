@@ -1,0 +1,289 @@
+ .angebotserstellung-editor {
+  display: grid;
+  gap: 28px;
+  padding: 28px;
+  background: #ffffff;
+  border-radius: 30px;
+  box-shadow: 0 24px 70px rgba(14, 30, 60, 0.08);
+}
+
+.meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.meta-grid label {
+  display: grid;
+  gap: 10px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.meta-grid input,
+.meta-grid textarea {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d2d6dc;
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #f8fbff;
+  font-size: 14px;
+  color: #111827;
+}
+
+.meta-grid textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.groups {
+  display: grid;
+  gap: 22px;
+}
+
+.group {
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  background: #f9fbff;
+  overflow: hidden;
+}
+
+.group-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 22px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.group-header label {
+  flex: 1 1 320px;
+  min-width: 240px;
+}
+
+.group-header input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 12px 14px;
+  background: #fafbff;
+}
+
+.group-header button {
+  border: none;
+  border-radius: 16px;
+  background: #fef2f2;
+  color: #b91c1c;
+  padding: 12px 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.group-header button:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+}
+
+.group-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: transparent;
+}
+
+.group-table thead {
+  background: #f3f6fb;
+}
+
+.group-table th,
+.group-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.group-table th {
+  text-align: left;
+  font-weight: 700;
+}
+
+.group-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.group-table input,
+.group-table select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.group-table td button {
+  border: none;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #6b7280;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.group-table td button:hover {
+  background: #eef2ff;
+}
+
+.group-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 22px;
+}
+
+  .quill-editor {
+    min-height: 180px;
+    border: 1px solid #d1d5db;
+    border-radius: 16px;
+    background: #ffffff;
+    overflow: hidden;
+  }
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.group-actions button:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.group-total {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  justify-content: flex-end;
+}
+
+.actions button {
+  border: none;
+  border-radius: 18px;
+  padding: 14px 22px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.actions button:first-child {
+  background: #e2e8f0;
+  color: #1f2937;
+}
+
+.actions button:nth-child(2) {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.actions button:nth-child(3) {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.actions button:hover {
+  transform: translateY(-1px);
+}
+
+.grand-total {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 16px 24px;
+  border-radius: 24px;
+  background: #eef2ff;
+  color: #1d4ed8;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+  align-items: start;
+}
+
+.main-col {
+  min-width: 0;
+}
+
+.side-col {
+  width: 100%;
+  max-width: 340px;
+}
+
+.sticky-element {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.header-actions button {
+  margin-left: 8px;
+}
+
+@media (max-width: 920px) {
+  .meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .group-header,
+  .group-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .group-table th,
+  .group-table td {
+    padding: 12px 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .angebotserstellung-editor {
+    padding: 20px;
+  }
+
+  .group-table th,
+  .group-table td {
+    font-size: 12px;
+  }
+
+  .actions {
+    justify-content: stretch;
+  }
+
+  .group-actions button,
+  .actions button {
+    width: 100%;
+  }
+}

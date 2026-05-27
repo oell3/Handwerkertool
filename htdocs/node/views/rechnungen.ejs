@@ -1,0 +1,57 @@
+
+<%- include('partials/header') %>
+     <%- include('partials/navbar') %>
+    <div class="container">
+        <h4>Rechnungen</h4>
+
+        <table class="table">
+            <input class="form-control" id="searchInput" placeholder="Suchen..." aria-label="Volltextsuche">
+            
+            <thead>
+                <tr>
+                    <th>Datum</th>
+                    <th>Rechnungsnummer</th>
+                    <th>Rechnungsbetrag</th>
+                    <th>Objekt</th>
+                    <th>Kunde</th>
+                    <th>Status</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                <% console.log(rechnungen); %>
+                 <% rechnungen.forEach((item)=>{ %>
+                
+                <tr onclick="window.location='/rechnungen/<%= item.ID %>'" style="cursor: pointer;">
+                        <td>
+                            <%= item.datum_formatiert %>
+                        </td>
+                         <td>
+                            <%= item.Rechnungsnummer %>
+                        </td>
+                        <td>
+                            <%= item.Rechnungsbetrag %>
+                        </td>
+                        <td>
+                   
+                            <%= objekte.find(p => p.ID === item.Objekt_ID)?.Adresse %>
+                            <%= objekte.find(p => p.ID === item.Objekt_ID)?.PLZ %>
+                            <%= objekte.find(p => p.ID === item.Objekt_ID)?.Stadt %>
+                        </td>
+                        <td>
+                   
+                            <%= kunden.find(k => k.ID === item.Kunden_ID)?.Name %>
+                        </td>
+                        <td>
+                            <%= item.Status %>
+                        </td>
+                </tr>
+                <% })%>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+<script src="/server.js"></script>
+
+</html>

@@ -1,0 +1,56 @@
+
+     <%- include('partials/header') %>
+     <%- include('partials/navbar') %>
+
+
+    <div class="container">
+
+        <h4>
+            <h4>Angebote</h4>
+        </h4>
+        <input class="form-control" id="searchInput" placeholder="Suchen..." aria-label="Volltextsuche">
+        <table class="table">
+            <thead>
+
+                <tr>
+                    <th>
+                       Datum
+                    </th>
+                    <th>
+                        Angebotsnummer
+                    </th>
+                    <th>
+                        Projekt
+                    </th>
+                    <th>
+                        Status
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <% angebote.forEach((item)=>{ %>
+                
+                <tr onclick="window.location='/angebote/<%= item.ID %>'" style="cursor: pointer;">
+                        <td>
+                            <%= item.datum_formatiert %>
+                        </td>
+                         <td>
+                            <%= item.Angebotsnummer %>
+                        </td>
+                        <td>
+                   
+                            <%= projekte.find(p => p.ID === item.Projekt_ID)?.Adresse %>
+                            <%= projekte.find(p => p.ID === item.Projekt_ID)?.PLZ %>
+                            <%= projekte.find(p => p.ID === item.Projekt_ID)?.Stadt %>
+                        </td>
+                        <td>
+                            <%= item.Status %>
+                        </td>
+                </tr>
+                <% })%>
+            </tbody>
+        </table>
+
+    </div>
+
+</body>

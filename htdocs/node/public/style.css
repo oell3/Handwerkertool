@@ -1,0 +1,210 @@
+body{
+    height: 100vh;
+    width:100vw;
+    display: flex;
+    margin: 0;
+     overflow-x: hidden;
+   font-size: 24px;
+}
+/*Navigation*/
+nav{
+  position: sticky;
+  top: 0;
+   width: 350px;
+    min-height: 100vh;
+    background-color:#0a1b2f;
+    justify-items: center;
+    overflow: hidden;
+}
+.navbaritems a{
+    display: flex;
+    flex-direction: row;
+    text-decoration-line: none;
+    color: whitesmoke;
+    font-size: 35px;
+    margin-top: 25px;
+    text-align: left;
+    
+}
+#searchInput{
+  font-size: 20px;
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.d-flex{
+  display:flex;
+}
+.navbaritems{
+  margin-top: 100px;
+}
+.navbaritems a:hover{
+  box-sizing: content-box;
+  position: static;
+  background-color: #39495a;
+  width: 100%;
+}
+.navbaritems a::after{
+  background-color: #39495a;
+  width: 100%;
+}
+.link-decoration a{
+  text-decoration: none;
+  text-decoration-line: none;
+  color: #000;
+}
+.option{
+  flex:2;
+  justify-content: flex-end;
+}
+.container{
+  flex: 2;
+  flex-grow: 4;
+  margin-left: 25px;
+  margin-right: 25px;
+  overflow: auto;
+}
+.border-bottom{
+  
+   border-bottom: 1px solid #ddd;
+}
+th, td {
+  border-bottom: 1px solid #ddd;
+  font-size: 25px;
+  text-align: left;
+}
+
+table{
+width: 100%;
+box-sizing: border-box;
+}
+.column{
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.row{
+  display: flex;
+  width: 100%;
+  justify-content: space-around; 
+}
+.border{
+  width: 100%;
+  font-size: 20px;
+  margin-right: 25px;
+  padding: 0 15px 15px 15px;
+  box-sizing: border-box;
+}
+
+.form-control{
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.outline{
+  border-radius: 5px;
+  outline: 2px solid rgb(131, 131, 131);
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.active{
+    background-color: #39495a;
+    width: 100%;
+}
+/* Style the tab */
+.tab {
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+  border: 1px solid #ccc;
+  background-color: #f1f1f1;
+}
+
+/* Style the buttons that are used to open the tab content */
+.tab button {
+  flex: 1;
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+}
+
+/* Change background color of buttons on hover */
+.tab button:hover {
+  background-color: #ddd;
+}
+
+/* Create an active/current tablink class */
+.tab button.active {
+  background-color: #0a1b2f;
+}
+
+/* Style the tab content */
+.tabcontent {
+  display: none;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-top: none;
+}
+
+button{
+  font-size: 20px;
+  padding: 20px;
+  border: none;
+  color: #ddd;
+  background-color: #0a1b2f;
+  border-radius: 10px;
+}
+button:hover{
+cursor: pointer;
+}
+.hover:hover{
+cursor: pointer;
+}
+.row-tools{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.toggle{
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #0a1b2f;
+  font-size: 16px;
+  line-height: 1;
+  border-radius: 0;
+}
+.toggle:hover{
+  background: transparent;
+}
+.toggle-spacer{
+  display: inline-block;
+  width: 12px;
+}
+.group-header.minimized td{
+  opacity: 0.85;
+}
+.right{
+  display: grid;
+  justify-content: right;
+  box-sizing:content-box;
+  width: 100%;
+}
+.formular{
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 100vw;
+  height: 100vh;
+  
+}
+.formular-size{
+  height: 800px;
+  width: 1000px;
+  font-size: 25px;
+}

@@ -1,0 +1,53 @@
+
+
+     <%- include('partials/header') %>
+     <%- include('partials/navbar') %>
+
+
+    <div class="container">
+        <h1>Wartungsübersicht</h1>
+
+        <table class="table">
+            <input class="form-control" id="searchInput" placeholder="Suchen..." aria-label="Volltextsuche">
+
+            <thead>
+                <th>Datum</th>
+                <th>Kunde</th>
+                <th>Objekt</th>
+                <th>Typ</th>
+                <th>Erzeugerdaten</th>
+            </thead>
+            <tbody>
+                <% wartungen.forEach((item)=>{ %>
+                    <tr onclick="window.location='/wartungsuebersicht/<%= item.ID %>'" style="cursor: pointer;">
+
+                        <td>
+                            <%= item.datum_formatiert %>
+                        </td>
+                           <td>
+                            <% console.log(kunden); %>
+                            <%= kunden.find(k => k.ID === item.Kunden_ID)?.Name %>
+                        </td>
+                        <td>
+                            <%= objekte.find(o => o.ID === item.Kunden_ID)?.Adresse %>
+                            <%= objekte.find(o => o.ID === item.Kunden_ID)?.PLZ %>
+                            <%= objekte.find(o => o.ID === item.Kunden_ID)?.Stadt %>
+                        </td>
+                        <td>
+                            <%= item.Typ %>
+                        </td>
+                        <td>
+                            <%= item.Erzeugerdaten %>
+                        </td>
+
+                    </tr>
+                    <%})%>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+
+<script src="/server.js"></script>
+
+</html>
