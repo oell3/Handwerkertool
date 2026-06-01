@@ -1,11 +1,15 @@
 .container {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
   background: #e7eef7;
+  padding-left: 280px;
 }
 
 .container-left {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 280px;
+  height: 100vh;
   background: linear-gradient(180deg, #07111f 0%, #0f243d 100%);
   padding: 24px 0;
   box-shadow: 2px 0 24px rgba(15, 41, 64, 0.18);
@@ -15,6 +19,7 @@
   padding: 28px 32px;
   background: #f6f9fc;
   min-height: 100vh;
+  overflow-y: auto;
 }
 
 .page-shell {
@@ -46,7 +51,11 @@
   .container-left {
     position: relative;
     width: 100%;
-    min-height: auto;
+    height: auto;
     box-shadow: none;
+  }
+
+  .container-right {
+    margin-left: 0;
   }
 }

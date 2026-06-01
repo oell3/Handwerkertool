@@ -1,0 +1,201 @@
+<div class="page-shell">
+  <div class="page-content" [formGroup]="form">
+
+    <div class="sticky-element">
+      <div class="head">
+        <button class="back" type="button" (click)="goBack()">‹ Zurück</button>
+        <div class="title"><h3>Angebotserstellung</h3></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" type="button" (click)="saveOffer()">Angebot speichern</button>
+        <button class="btn-primary" type="button" (click)="createPdf()">Angebot erstellen</button>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="main-col">
+
+        <div class="card">
+          <h3>Kunde & Projekt</h3>
+          <div class="meta-grid">
+            <label>
+              Kunde
+              <select formControlName="kundenId">
+                <option [ngValue]="null">— Kunde wählen —</option>
+                <option *ngFor="let k of kunden" [ngValue]="k.id">{{ k.name || k.Name || k.displayName }}</option>
+              </select>
+            </label>
+
+            <label>
+              Ansprechpartner
+              <select formControlName="ansprechpartnerId">
+                <option [ngValue]="null">— Ansprechpartner wählen —</option>
+                <option *ngFor="let a of ansprechpartner" [ngValue]="a.id || a.ID">{{ a.Name || a.name }}</option>
+              </select>
+            </label>
+
+            <label>
+              Objekt
+              <select formControlName="objektId">
+                <option [ngValue]="null">— Objekt wählen —</option>
+                <option *ngFor="let o of objekte" [ngValue]="o.id || o.ID">{{ o.Adresse || o.adresse || o.name }}</option>
+              </select>
+            </label>
+
+            <label>
+              Projekt
+              <select formControlName="projektId">
+                <option [ngValue]="null">— Projekt wählen —</option>
+                <option *ngFor="let p of projekte" [ngValue]="p.id || p.ID">{{ p.ID || p.name || p.Bezeichnung }}</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Angebot</h3>
+          <div class="meta-grid">
+            <label>
+              Titel
+              <input formControlName="title" type="text" />
+            </label>
+            <label>
+              Angebotsdatum
+              <input class="input" id="angebotsdatum" type="date" />
+            </label>
+          </div>
+
+          <div class="meta-grid">
+            <label>
+              Anrede
+              <input class="input" id="Anrede" type="text" />
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Einleitungstext</h3>
+          <div class="meta-grid">
+            <label>
+              Vorlage Einleitung
+              <select formControlName="vorlageEinleitungId" (change)="form.patchValue({ einleitung: (vorlagen.find(v=>v.id==form.value.vorlageEinleitungId)||{}).text || '' })">
+                <option [ngValue]="null">— Vorlage wählen —</option>
+                <option *ngFor="let v of vorlagen" [ngValue]="v.id">{{ v.name || v.title }}</option>
+              </select>
+            </label>
+          </div>
+          <div id="einleitungEditor" class="quill-editor"></div>
+          <div class="vorlage">
+            <input class="input" id="vorlagenameeinleitung" placeholder="Name der Vorlage vergeben..." />
+            <button type="button" id="saveVorlageEinleitung">Text als Vorlage speichern</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Leistungen</h3>
+          <section class="groups" formArrayName="groups">
+            <div class="group" *ngFor="let group of groups.controls; let gi = index" [formGroupName]="gi">
+              <table class="group-table">
+                <thead>
+                  <tr>
+                    <th>Typ</th>
+                    <th>Menge</th>
+                    <th>Bezeichnung</th>
+                    <th>EK</th>
+                    <th>Aufschlag %</th>
+                    <th>Rabatt %</th>
+                    <th>EP</th>
+                    <th>GP</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody formArrayName="rows">
+                  <tr *ngFor="let row of getRows(gi).controls; let ri = index" [formGroupName]="ri">
+                    <td>
+                      <select formControlName="typ">
+                        <option *ngFor="let option of typeOptions" [value]="option.value">{{ option.label }}</option>
+                      </select>
+                    </td>
+                    <td><input formControlName="menge" type="number" min="0" /></td>
+                    <td><input formControlName="bezeichnung" type="text" /></td>
+                    <td><input formControlName="ek" type="number" min="0" step="0.01" /></td>
+                    <td><input formControlName="aufschlag" type="number" min="0" step="0.1" /></td>
+                    <td><input formControlName="rabatt" type="number" min="0" step="0.1" /></td>
+                    <td>{{ calculateRow(row).ep | number:'1.2-2' }}</td>
+                    <td>{{ calculateRow(row).gp | number:'1.2-2' }}</td>
+                    <td>
+                      <button type="button" (click)="removeRow(gi, ri)">X</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <div class="group-actions">
+                <button type="button" (click)="addRow(gi)">Position hinzufügen</button>
+                <span class="group-total">Gruppensumme: {{ getGroupTotal(gi) | number:'1.2-2' }} EUR</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="actions">
+            <button type="button" (click)="addGroup()">Leistungsgruppe hinzufügen</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Schlusstext</h3>
+          <div class="meta-grid">
+            <label>
+              Vorlage Schluss
+              <select formControlName="vorlageSchlussId" (change)="form.patchValue({ schluss: (vorlagen.find(v=>v.id==form.value.vorlageSchlussId)||{}).text || '' })">
+                <option [ngValue]="null">— Vorlage wählen —</option>
+                <option *ngFor="let v of vorlagen" [ngValue]="v.id">{{ v.name || v.title }}</option>
+              </select>
+            </label>
+          </div>
+          <div id="schlussEditor" class="quill-editor"></div>
+          <div class="vorlage">
+            <input class="input" id="vorlagenameschluss" placeholder="Name der Vorlage vergeben..." />
+            <button type="button" id="saveVorlageSchluss">Text als Vorlage speichern</button>
+          </div>
+        </div>
+
+        <div class="card rsk">
+          <div>
+            <h3>Rabatt & Skonto</h3>
+            <div class="meta-grid">
+              <label><input class="input" id="rabattProzent" placeholder="Rabatt %" type="number" /></label>
+              <label><input class="input" id="rabattBetrag" placeholder="Rabatt €" type="number" /></label>
+              <label><input class="input" id="skontoProzent" placeholder="Skonto %" type="number" /></label>
+              <label><input class="input" id="skontoTage" placeholder="Tage" type="number" /></label>
+            </div>
+            <div id="rabatttext"></div>
+            <div id="skontotext"></div>
+          </div>
+          <div>
+            <h3>Optionen</h3>
+            <label><input type="checkbox" id="lohnsteuer" name="lohnsteuer" /> Umsatzsteuer für Lohnkosten ausweisen</label>
+            <label><input type="checkbox" id="langtext" name="langtext" /> Langtext ausweisen</label>
+          </div>
+        </div>
+
+      </div>
+
+      <aside class="side-col">
+        <div class="card kalkulation">
+          <div class="calc-main">💰 Übersicht</div>
+          <div class="calc-row"><span>Nettosumme</span><span>{{ getGrandTotal() | number:'1.2-2' }} €</span></div>
+          <div class="calc-row"><span>Kosten</span><span>{{ (materialKosten + lohnKosten + sonstigeKosten) | number:'1.2-2' }} €</span></div>
+          <hr />
+          <div class="calc-row"><span>Material</span><span>{{ materialKosten | number:'1.2-2' }} €</span></div>
+          <div class="calc-row"><span>Lohn</span><span>{{ lohnKosten | number:'1.2-2' }} €</span></div>
+          <div class="calc-row"><span>Sonstige</span><span>{{ sonstigeKosten | number:'1.2-2' }} €</span></div>
+          <hr />
+          <div class="calc-row"><span>Marge</span><span>{{ (getGrandTotal() - (materialKosten + lohnKosten + sonstigeKosten)) | number:'1.2-2' }} €</span></div>
+          <div class="calc-row tooltip"><span>Marge %</span><span>{{ ((getGrandTotal() - (materialKosten + lohnKosten + sonstigeKosten)) / (getGrandTotal() || 1) * 100) | number:'1.2-0' }}%</span></div>
+        </div>
+      </aside>
+    </div>
+
+  </div>
+</div>
