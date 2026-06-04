@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import { AppState, AngebotGroup, AngebotRow } from './state';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class CalculatorService {
-
   calculateRow(row: AngebotRow) {
     const menge = Number(row.menge || 0);
     const ek = Number(row.ek || 0);
@@ -18,21 +17,21 @@ export class CalculatorService {
 
     return {
       ep: Number(ep.toFixed(2)),
-      gp: Number(gp.toFixed(2))
+      gp: Number(gp.toFixed(2)),
     };
   }
 
   recalculate(state: AppState) {
-    state.angebot.groups = state.angebot.groups.map(group => ({
+    state.angebot.groups = state.angebot.groups.map((group) => ({
       ...group,
-      rows: group.rows.map(row => {
+      rows: group.rows.map((row) => {
         const { ep, gp } = this.calculateRow(row);
         return {
           ...row,
           ep,
-          gp
+          gp,
         };
-      })
+      }),
     }));
   }
 

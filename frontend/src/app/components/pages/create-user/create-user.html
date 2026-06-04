@@ -1,37 +1,18 @@
 <form [formGroup]="registerForm" (ngSubmit)="createUser()">
+  <input type="text" formControlName="name" placeholder="Name" />
 
-  <input
-    type="text"
-    formControlName="name"
-    placeholder="Name"
-  />
+  <input type="password" formControlName="password" placeholder="Password" />
 
-  <input
-    type="password"
-    formControlName="password"
-    placeholder="Password"
-  />
-
-  <button type="submit">
-    Create User
-  </button>
-
+  <button type="submit">Create User</button>
 </form>
 
-
- <button (click)="vorlageSchluss()" type="submit">
-    Vorlage
-  </button>
-  @if(vorlagen.length === 0){
-    Keine Vorlagen vorhanden
-  }@else{
-
-
-@for (item of vorlagen; track item.id) {
-
-  <div>
-    {{ item.text }}
-  </div>
-
-}
+<button (click)="vorlageSchluss()" type="submit">Vorlage</button>
+@if (vorlagen.length === 0) {
+  Keine Vorlagen vorhanden
+} @else {
+  @for (item of vorlagen; track item.id) {
+    <div>
+      {{ item.text }}
+    </div>
   }
+}

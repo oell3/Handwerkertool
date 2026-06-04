@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Wartungsuebersicht } from './wartungsuebersicht';
+import { WartungsuebersichtComponent } from './wartungsuebersicht';
 
-describe('Wartungsuebersicht', () => {
-  let component: Wartungsuebersicht;
-  let fixture: ComponentFixture<Wartungsuebersicht>;
+describe('WartungsuebersichtComponent', () => {
+  let component: WartungsuebersichtComponent;
+  let fixture: ComponentFixture<WartungsuebersichtComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Wartungsuebersicht],
+      imports: [WartungsuebersichtComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Wartungsuebersicht);
+    fixture = TestBed.createComponent(WartungsuebersichtComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

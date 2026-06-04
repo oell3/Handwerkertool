@@ -1,22 +1,19 @@
 import { pool } from "../../db/pool.js";
 
-export async function getallProjekte() {
+export async function getallProjekte(mandant_id) {
 
-  const [projekte] = await pool.query(
-    "SELECT * FROM crm.projekte"
+  const result = await pool.query(
+    "SELECT * FROM crm.projekte WHERE mandant_id = $1", [mandant_id]
   );
 
-  const result = {
-    projekte
-  };
-  return (result);
+  return result.rows;
 }
 
-export async function getallProjektebyKunde(kundenId) {
+export async function getallProjektebyKunde(kundenId, mandant_id) {
 
   const projekte = await pool.query(
-    "SELECT * FROM crm.projekte WHERE Kunden_ID = $1",
-    [kundenId]
+    "SELECT * FROM crm.projekte WHERE Kunden_ID = $1 AND mandant_id = $2",
+    [kundenId, mandant_id]
   );
 
   const result = {
@@ -25,11 +22,11 @@ export async function getallProjektebyKunde(kundenId) {
   return (result);
 }
 
-export async function getallProjektebyObjekt(objektId) {
+export async function getallProjektebyObjekt(objektId, mandantId) {
 
   const projekte = await pool.query(
-    "SELECT * FROM crm.projekte WHERE Objekt_ID = $1",
-    [objektId]
+    "SELECT * FROM crm.projekte WHERE Objekt_ID = $1 AND mandant_id = $2",
+    [objektId, mandantId]
   );    
   const result = {
     projekte: projekte.rows

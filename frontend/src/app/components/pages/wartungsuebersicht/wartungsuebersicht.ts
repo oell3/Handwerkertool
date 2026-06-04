@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-wartungsuebersicht',
   imports: [],
   templateUrl: './wartungsuebersicht.html',
-  styleUrl: './wartungsuebersicht.scss',
+  styleUrls: ['./wartungsuebersicht.scss'],
 })
-export class Wartungsuebersicht {}
+export class WartungsuebersichtComponent {}

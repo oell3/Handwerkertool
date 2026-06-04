@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-ausgaben',
   imports: [],
   templateUrl: './ausgaben.html',
-  styleUrl: './ausgaben.scss',
+  styleUrls: ['./ausgaben.scss'],
 })
-export class Ausgaben {}
+export class AusgabenComponent {}

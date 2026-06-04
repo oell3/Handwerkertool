@@ -54,10 +54,9 @@ export interface AppState {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class StateService {
-
   private state = new BehaviorSubject<AppState>({
     angebot: {
       haschange: false,
@@ -74,48 +73,44 @@ export class StateService {
       anschreiben: null,
       title: null,
       datum: null,
-      groups: []
+      groups: [],
     },
 
     currentMischId: null,
     currentGruppeId: null,
 
     groupCounter: 0,
-    rowCounter: 0
+    rowCounter: 0,
   });
 
   readonly state$ = this.state.asObservable();
 
-  get value():AppState {
+  get value(): AppState {
     return this.state.value;
   }
 
-  update(partial:Partial<AppState>) {
-
+  update(partial: Partial<AppState>) {
     this.state.next({
       ...this.state.value,
-      ...partial
+      ...partial,
     });
-
   }
 
   nextGroupId(): number {
-
     const id = this.state.value.groupCounter + 1;
 
     this.update({
-      groupCounter:id
+      groupCounter: id,
     });
 
     return id;
   }
 
   nextRowId(): number {
-
     const id = this.state.value.rowCounter + 1;
 
     this.update({
-      rowCounter:id
+      rowCounter: id,
     });
 
     return id;

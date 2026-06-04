@@ -1,10 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Component, inject } from '@angular/core';
-import {
-  FormBuilder,
-  ReactiveFormsModule,
-  FormGroup
-} from "@angular/forms";
+import { Component, inject, OnInit } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, FormGroup } from '@angular/forms';
 
 interface Vorlage {
   id: number;
@@ -20,83 +16,55 @@ interface Vorlage {
   templateUrl: './create-user.html',
   styleUrls: ['./create-user.scss'],
 })
-export class CreateUser {
-
+export class CreateUserComponent implements OnInit {
   private http = inject(HttpClient);
+  private fb = inject(FormBuilder);
 
-  registerForm!: FormGroup;
+  registerForm: FormGroup = this.fb.group({
+    name: [''],
+    password: [''],
+  });
 
   public vorlagen: Vorlage[] = [];
 
-  constructor(private fb: FormBuilder) {
-
-    this.registerForm = this.fb.group({
-      name: [''],
-      password: ['']
-    });
-
-  }
-
   ngOnInit() {
-
     this.vorlageSchluss();
-
   }
 
   public createUser(): void {
-
-    this.http.post(
-      "http://localhost:8080/login",
-      this.registerForm.value,
-      {
+    this.http
+      .post('http://localhost:8080/login', this.registerForm.value, {
         observe: 'response',
-        withCredentials: true
-      }
-    ).subscribe({
+        withCredentials: true,
+      })
+      .subscribe({
+        next: (res) => {
+          console.log('Status:', res.status);
+          console.log('Body:', res.body);
+        },
 
-      next: (res) => {
-
-        console.log("Status:", res.status);
-        console.log("Body:", res.body);
-
-      },
-
-      error: (error) => {
-
-        console.error(error);
-
-      }
-
-    });
-
+        error: (error) => {
+          console.error(error);
+        },
+      });
   }
 
   public vorlageSchluss(): void {
-    
+    this.http
+      .get<Vorlage[]>('http://localhost:8080/api/vorlage/einleitung', {
+        withCredentials: true,
+      })
+      .subscribe({
+        next: (res) => {
+          console.log(res);
 
-    this.http.get<Vorlage[]>(
-      "http://localhost:8080/api/vorlage/einleitung",
-      {
-        withCredentials: true
-      }
-    ).subscribe({
+          this.vorlagen = res;
+        },
 
-      next: (res) => {
-
-        console.log(res);
-
-        this.vorlagen = res;
-
-      },
-
-      error: (error) => {
-        this.vorlagen = [];
-        console.error(error);
-
-      }
-
-    });
-
+        error: (error) => {
+          this.vorlagen = [];
+          console.error(error);
+        },
+      });
   }
-
 }

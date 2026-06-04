@@ -4,40 +4,29 @@ import { getallProjekte, getallProjektebyKunde, getallProjektedata, getallProjek
 
 const router = express.Router()
 
-router.get('/:kundenid', authMiddleware, async (req, res) => {
-   const mandantId = req.user.mandant_id
+router.get('/:kundenid', async (req, res) => {
+   const mandantId = req.user.mandantid
   
-  const data = await getallProjektebyKunde(req.params.kundenid);
+  const data = await getallProjektebyKunde(req.params.kundenid, mandantId);
 
-  res.json({items: data.projekte.map((p) =>({
-    id: p.ID,
-    name: p.Name,
-    status: p.Status,
-  }))})
+  res.json(data)
 })
 
-router.get('/:kundenid/:objektid', authMiddleware,  async (req, res) => {
-  const mandantId = req.user.mandant_id
+router.get('/:kundenid/:objektid',  async (req, res) => {
+  const mandantId = req.user.mandantid
   
-  const data = await getallProjektebyObjekt(req.params.objektid);
+  const data = await getallProjektebyObjekt(req.params.objektid, mandantId);
 
-  res.json({items: data.projekte.map((p) =>({
-    id: p.ID,
-    name: p.Name,
-    status: p.Status,
-  }))})
+  res.json(data)
 })
 
 router.get('/', async (req, res) => {
-   const mandantId = req.user.mandant_id
+   const mandantId = req.user.mandantid
+  
 
   const data = await getallProjekte(mandantId);
 
-  res.json({items: data.projekte.map((p) =>({
-    id: p.ID,
-    name: p.Name,
-    status: p.Status,
-  }))})
-})
+  res.json(data)
+});
 
 export default router;

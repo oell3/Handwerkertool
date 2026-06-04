@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-projekte',
   imports: [],
   templateUrl: './projekte.html',
-  styleUrl: './projekte.scss',
+  styleUrls: ['./projekte.scss'],
 })
-export class Projekte {}
+export class ProjekteComponent {}

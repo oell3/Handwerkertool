@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-angebote',
   imports: [],
   templateUrl: './angebote.html',
-  styleUrl: './angebote.scss',
+  styleUrls: ['./angebote.scss'],
 })
-export class Angebote {}
+export class AngeboteComponent {}

@@ -6,12 +6,32 @@ import {
   FormBuilder,
   FormGroup,
   ReactiveFormsModule,
-  Validators
+  Validators,
 } from '@angular/forms';
 
+import { signal } from '@angular/core';
 import { AngebotService } from './service/angebot.service';
 import { CalculatorService } from './service/calculator';
 import { StateService } from './service/state';
+interface Kunde {
+  id: string;
+  ID?: string | number;
+  typ?: string;
+  name?: string;
+  Name?: string;
+  adresse?: string;
+  plz?: string;
+  stadt?: string;
+  mail?: string;
+  telefon?: string;
+  fax?: string;
+  steuernummer?: string;
+  iban?: string;
+  steueridentifikationsnummer?: string;
+  lat?: string;
+  lon?: string;
+  mandant_id?: string;
+}
 
 @Component({
   selector: 'app-angebotserstellung',
@@ -19,18 +39,21 @@ import { StateService } from './service/state';
   imports: [CommonModule, ReactiveFormsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './angebotserstellung.html',
-  styleUrls: ['./angebotserstellung.scss']
+  styleUrls: ['./angebotserstellung.scss'],
 })
-export class Angebotserstellung implements OnInit, AfterViewInit {
+
+
+export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   private readonly fb = inject(FormBuilder);
   private readonly state = inject(StateService);
   private readonly calculator = inject(CalculatorService);
   private readonly angebotService = inject(AngebotService);
-  kunden: Array<any> = [];
-  ansprechpartner: Array<any> = [];
-  objekte: Array<any> = [];
-  projekte: Array<any> = [];
-  vorlagen: Array<any> = [];
+  kunden = signal<Kunde[]>([]);
+  ansprechpartner = signal<any[]>([]);
+  objekte = signal<any[]>([]);
+  projekte = signal<any[]>([]);
+  vorlagenschluss = signal<any[]>([]);
+  vorlageneinleitung = signal<any[]>([]);
   private allObjekte: Array<any> = [];
   private allProjekte: Array<any> = [];
   private allAnsprechpartner: Array<any> = [];
@@ -44,7 +67,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
     { value: 'lohn', label: 'Lohn' },
     { value: 'sonstiges', label: 'Sonstiges' },
     { value: 'misch', label: 'Mischposition' },
-    { value: 'gruppe', label: 'Gruppe' }
+    { value: 'gruppe', label: 'Gruppe' },
   ];
 
   ngOnInit(): void {
@@ -73,12 +96,14 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
   }
 
   private setupVorlagenListeners() {
-    this.form.get('vorlageEinleitungId')?.valueChanges.subscribe(id => this.applyVorlageEinleitung(id));
-    this.form.get('vorlageSchlussId')?.valueChanges.subscribe(id => this.applyVorlageSchluss(id));
+    this.form
+      .get('vorlageEinleitungId')
+      ?.valueChanges.subscribe((id) => this.applyVorlageEinleitung(id));
+    this.form.get('vorlageSchlussId')?.valueChanges.subscribe((id) => this.applyVorlageSchluss(id));
   }
 
   private applyVorlageEinleitung(vorlageId: any) {
-    const vorlage = this.vorlagen.find(v => v.id === vorlageId || v.ID === vorlageId);
+    const vorlage = this.vorlageneinleitung().find((v: any) => v.id === vorlageId || v.ID === vorlageId);
     const value = vorlage?.text || vorlage?.content || '';
     this.form.patchValue({ einleitung: value }, { emitEvent: false });
     if (this.einleitungQuill) {
@@ -87,7 +112,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
   }
 
   private applyVorlageSchluss(vorlageId: any) {
-    const vorlage = this.vorlagen.find(v => v.id === vorlageId || v.ID === vorlageId);
+    const vorlage = this.vorlagenschluss().find((v: any) => v.id === vorlageId || v.ID === vorlageId);
     const value = vorlage?.text || vorlage?.content || '';
     this.form.patchValue({ schluss: value }, { emitEvent: false });
     if (this.schlussQuill) {
@@ -96,33 +121,57 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
   }
 
   private async loadInitialData() {
-    await Promise.all([this.loadKunden(), this.loadVorlagen(), this.loadObjekte(), this.loadProjekte(), this.loadAnsprechpartner()]);
+    await Promise.all([
+      this.loadKunden(),
+      this.loadVorlagen(),
+      this.loadObjekte(),
+      this.loadProjekte(),
+      this.loadAnsprechpartner(),
+    ]);
   }
 
   private async loadKunden() {
+
     try {
       const res = await fetch('/api/kunden');
-      if (res.ok) this.kunden = await res.json();
+      const data = await res.json();
+      if (res.ok) {
+        const normalized = data.map((K: any) => ({
+          ...K,
+          id: String(K.id ?? K.ID ?? ''),
+          name: K.name ?? K.Name ?? '',
+        }));
+        this.kunden.set(normalized);
+      }
     } catch (e) {
       console.warn('kunden load failed', e);
     }
+    console.log('Kunden:', this.kunden());
   }
 
   private async loadVorlagen() {
     try {
       const res = await fetch('/api/vorlagen');
-      if (res.ok) this.vorlagen = await res.json();
+      const data = await res.json();
+      if (res.ok){
+        this.vorlageneinleitung.set([...data.einleitung])
+        this.vorlagenschluss.set([...data.schluss]);
+    
+      } 
     } catch (e) {
       console.warn('vorlagen load failed', e);
     }
+    console.log('vorlagen:', this.vorlageneinleitung(), this.vorlagenschluss());
   }
 
   private async loadObjekte() {
     try {
       const res = await fetch('/api/objekte');
       if (res.ok) {
-        this.allObjekte = await res.json();
-        this.objekte = [...this.allObjekte];
+        const data = await res.json();
+
+        this.allObjekte = [...data.objekte];
+        this.objekte.set([...this.allObjekte]);
       }
     } catch (e) {
       console.warn('objekte load failed', e);
@@ -134,7 +183,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
       const res = await fetch('/api/projekte');
       if (res.ok) {
         this.allProjekte = await res.json();
-        this.projekte = [...this.allProjekte];
+        this.projekte.set([...this.allProjekte]);
       }
     } catch (e) {
       console.warn('projekte load failed', e);
@@ -146,7 +195,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
       const res = await fetch('/api/ansprechpartner');
       if (res.ok) {
         this.allAnsprechpartner = await res.json();
-        this.ansprechpartner = [...this.allAnsprechpartner];
+        this.ansprechpartner.set([...this.allAnsprechpartner]);
       }
     } catch (e) {
       console.warn('ansprechpartner load failed', e);
@@ -154,16 +203,31 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
   }
 
   private onKundeChange(kundenId: any) {
-    this.form.patchValue({ objektId: null, projektId: null, ansprechpartnerId: null }, { emitEvent: false });
+    this.form.patchValue(
+      { objektId: null, projektId: null, ansprechpartnerId: null },
+      { emitEvent: false },
+    );
     if (kundenId) {
       const normalized = String(kundenId);
-      this.objekte = this.allObjekte.filter(o => String(o.kundenId || o.Kunden_ID || o.KundenId || o.KundenId) === normalized);
-      this.projekte = this.allProjekte.filter(p => String(p.kundenId || p.Kunden_ID || p.KundenId) === normalized);
-      this.ansprechpartner = this.allAnsprechpartner.filter(a => String(a.kundenId || a.Kunden_ID || a.KundenId) === normalized);
+      this.objekte.set(
+        this.allObjekte.filter(
+          (o) => String(o.kundenId || o.Kunden_ID || o.KundenId || o.KundenId) === normalized,
+        ),
+      );
+      this.projekte.set(
+        this.allProjekte.filter(
+          (p) => String(p.kundenId || p.Kunden_ID || p.KundenId) === normalized,
+        ),
+      );
+      this.ansprechpartner.set(
+        this.allAnsprechpartner.filter(
+          (a) => String(a.kundenId || a.Kunden_ID || a.KundenId) === normalized,
+        ),
+      );
     } else {
-      this.objekte = [...this.allObjekte];
-      this.projekte = [...this.allProjekte];
-      this.ansprechpartner = [...this.allAnsprechpartner];
+      this.objekte.set([...this.allObjekte]);
+      this.projekte.set([...this.allProjekte]);
+      this.ansprechpartner.set([...this.allAnsprechpartner]);
     }
   }
 
@@ -212,13 +276,13 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
   }
 
   private buildForm() {
-    const groups = this.state.value.angebot.groups.map(group =>
+    const groups = this.state.value.angebot.groups.map((group) =>
       this.fb.group({
         id: [group.id],
         name: [group.name || `Leistungsgruppe ${group.id}`, Validators.required],
         collapsed: [group.collapsed ?? false],
         rows: this.fb.array(
-          group.rows.map(row =>
+          group.rows.map((row) =>
             this.fb.group({
               id: [row.id],
               typ: [row.typ || 'material', Validators.required],
@@ -232,11 +296,11 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
               gruppeId: [row.gruppeId ?? null],
               parentMischId: [row.parentMischId ?? null],
               parentGruppeId: [row.parentGruppeId ?? null],
-              remark: [row.remark || '']
-            })
-          )
-        )
-      })
+              remark: [row.remark || ''],
+            }),
+          ),
+        ),
+      }),
     );
 
     this.form = this.fb.group({
@@ -249,7 +313,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
       ansprechpartnerId: [(this.state.value.angebot as any).ansprechpartnerId || null],
       vorlageEinleitungId: [(this.state.value.angebot as any).vorlageEinleitungId || null],
       vorlageSchlussId: [(this.state.value.angebot as any).vorlageSchlussId || null],
-      groups: this.fb.array(groups)
+      groups: this.fb.array(groups),
     });
   }
 
@@ -259,7 +323,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
       id: [id],
       name: [`Leistungsgruppe ${id}`, Validators.required],
       collapsed: [false],
-      rows: this.fb.array([this.createRow()])
+      rows: this.fb.array([this.createRow()]),
     });
   }
 
@@ -277,7 +341,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
       gruppeId: [null],
       parentMischId: [null],
       parentGruppeId: [null],
-      remark: ['']
+      remark: [''],
     });
   }
 
@@ -295,14 +359,42 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
     return this.groups.at(groupIndex).get('rows') as FormArray;
   }
 
+  getRowsFromGroup(group: AbstractControl): FormArray {
+    return group.get('rows') as FormArray;
+  }
+
   addRow(groupIndex: number) {
     this.getRows(groupIndex).push(this.createRow());
+    this.syncState();
+  }
+
+  addRowFromGroup(group: AbstractControl) {
+    this.getRowsFromGroup(group).push(this.createRow());
     this.syncState();
   }
 
   removeRow(groupIndex: number, rowIndex: number) {
     this.getRows(groupIndex).removeAt(rowIndex);
     this.syncState();
+  }
+
+  removeRowFromGroup(group: AbstractControl, rowIndex: number) {
+    this.getRowsFromGroup(group).removeAt(rowIndex);
+    this.syncState();
+  }
+
+  getGroupTotal(groupIndex: number) {
+    return this.getRows(groupIndex).controls.reduce((sum, control) => {
+      const { gp } = this.calculateRow(control);
+      return sum + gp;
+    }, 0);
+  }
+
+  getGroupTotalFromGroup(group: AbstractControl) {
+    return this.getRowsFromGroup(group).controls.reduce((sum, control) => {
+      const { gp } = this.calculateRow(control);
+      return sum + gp;
+    }, 0);
   }
 
   calculateRow(control: AbstractControl) {
@@ -317,15 +409,8 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
 
     return {
       ep: Number(ep.toFixed(2)),
-      gp: Number((ep * menge).toFixed(2))
+      gp: Number((ep * menge).toFixed(2)),
     };
-  }
-
-  getGroupTotal(groupIndex: number) {
-    return this.getRows(groupIndex).controls.reduce((sum, control) => {
-      const { gp } = this.calculateRow(control);
-      return sum + gp;
-    }, 0);
   }
 
   getGrandTotal() {
@@ -345,7 +430,7 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
 
     this.groups.controls.forEach((groupCtrl) => {
       const rows = (groupCtrl.get('rows') as FormArray).controls;
-      rows.forEach(r => {
+      rows.forEach((r) => {
         const val = r.value;
         const menge = Number(val.menge || 0);
         const ek = Number(val.ek || 0);
@@ -389,8 +474,8 @@ export class Angebotserstellung implements OnInit, AfterViewInit {
       angebot: {
         ...this.state.value.angebot,
         ...this.form.value,
-        haschange: true
-      }
+        haschange: true,
+      },
     });
   }
 }

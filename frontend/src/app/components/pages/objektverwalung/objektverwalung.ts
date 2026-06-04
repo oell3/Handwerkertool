@@ -1,9 +1,9 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-objektverwalung',
+  selector: 'app-objektverwaltung',
   imports: [],
   templateUrl: './objektverwalung.html',
-  styleUrl: './objektverwalung.scss',
+  styleUrls: ['./objektverwalung.scss'],
 })
-export class Objektverwalung {}
+export class ObjektverwaltungComponent {}

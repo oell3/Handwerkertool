@@ -6,18 +6,26 @@ import {getVorlagenEinleitung, getVorlagenSchluss} from './vorlage.function.js';
 
 const router = express.Router();
 
-router.get('/einleitung', async (req, res) => {
-  console.log("Test"); 
-  const mandantId = req.user.mandant_id 
-  const data = await getVorlagenEinleitung(mandantId);
+router.get('/', async (req, res) => {
+ 
+  const mandantId = req.user.mandantid 
+  const einleitung = await getVorlagenEinleitung(mandantId);
+  const schluss = await getVorlagenSchluss(mandantId);
 
-   console.log(data);
+
+  res.json({einleitung:einleitung, schluss:schluss});
+});
+
+router.get('/einleitung', async (req, res) => {
+
+  const mandantId = req.user.mandantid 
+  const data = await getVorlagenEinleitung(mandantId);
 
   res.json(data);
 });
 
 router.get('/schluss', async (req, res) => {
-   const mandantId = req.user.mandant_id 
+   const mandantId = req.user.mandantid 
   const data = await getVorlagenSchluss(mandantId);
 
   res.json(data);
@@ -25,7 +33,7 @@ router.get('/schluss', async (req, res) => {
 
 
 router.put('/save', async (req, res) => {
-   const mandantId = req.user.mandant_id
+   const mandantId = req.user.mandantid
   
   const { name, content, type } = req.body; 
   saveVorlage(name, content, type);

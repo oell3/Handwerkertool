@@ -7,6 +7,6 @@ import { RouterModule } from '@angular/router';
   templateUrl: './nav.html',
   styleUrls: ['./nav.scss'],
 })
-export class Nav {
+export class NavComponent {
   protected readonly title = signal('Termine');
 }

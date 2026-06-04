@@ -6,6 +6,7 @@ import { refresh } from './refresh.functions.js';
 import { UAParser } from "ua-parser-js";
 dotenv.config();
 export async function createJWToken(userid, mandant_id, role){
+    console.log(userid, mandant_id, role)
     return await jwt.sign({
         userid: userid,
         mandantid: mandant_id,

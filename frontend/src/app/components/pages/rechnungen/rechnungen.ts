@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-rechnungen',
   imports: [],
   templateUrl: './rechnungen.html',
-  styleUrl: './rechnungen.scss',
+  styleUrls: ['./rechnungen.scss'],
 })
-export class Rechnungen {}
+export class RechnungenComponent {}

@@ -5,31 +5,22 @@ import { getallAnsprechpartner , getAnsprechpartnerByKundenId, getAnsprechpartne
 
 const router = express.Router();
 
-router.get('/ansprechpartner', async (req,res) =>{
- const mandantId = req.user.mandant_id
-  const [data] = await getallAnsprechpartner(mandantId);
+router.get('/', async (req,res) =>{
+ const mandantId = req.user.mandantid
+  const data = await getallAnsprechpartner(mandantId);
   
  
 
-  res.json({items:data.map((a) =>({
-    id: a.ID,
-    anrede: a.Anrede,
-    name:  a.Name,
-    vorname: a.Vorname,
-    telefon: a.Telefon,
-    mail: a.Mail,
-    mobil: a.Mobil,
-    haupt: a.Hauptansprechpartner
-  }))})
+  res.json(data)
 });
 
 
 
 
 
-router.get('/ansprechpartner/:id', async (req,res) =>{
+router.get('/:id', async (req,res) =>{
  
-  const mandantId = req.user.mandant_id
+  const mandantId = req.user.mandantid
   const data = await getAnsprechpartner(req.params.id, mandantId);
 
   res.json({items:data});

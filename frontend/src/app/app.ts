@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { AuthService } from './service/auth/auth';
 
@@ -6,9 +6,9 @@ import { AuthService } from './service/auth/auth';
   selector: 'app-root',
   imports: [RouterOutlet],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrls: ['./app.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {
-
-   constructor(public authService: AuthService) {}
+export class AppComponent {
+  protected authService = inject(AuthService);
 }

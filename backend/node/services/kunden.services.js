@@ -2,6 +2,12 @@ import { pool } from "../db/pool.js";
 
 export async function getallKunden(mandant_id) { /*getestet*/
 
+  const result = await pool.query("SELECT * FROM crm.kunde WHERE mandant_id = $1", [mandant_id]);
+
+  return result.rows;
+}
+export async function getallKundenData(mandant_id) { /*getestet*/
+
   const kundendaten = await pool.query("SELECT * FROM crm.kunde WHERE mandant_id = $1", [mandant_id]);
   const projekte = await pool.query("SELECT * FROM crm.projekte WHERE mandant_id = $1", [mandant_id]);
 

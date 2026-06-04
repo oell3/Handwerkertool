@@ -1,10 +1,10 @@
 import { pool } from "../../db/pool.js";
 
 
-export async function getallAnsprechpartner(){
+export async function getallAnsprechpartner(mandant_id){
         
     try{
-    const ansprechpartner = await pool.query('SELECT * FROM crm.crm.ansprechpartner');
+    const ansprechpartner = await pool.query('SELECT * FROM crm.ansprechpartner WHERE mandant_id = $1', [mandant_id]);
       
         return ansprechpartner.rows;
   } catch (err) {

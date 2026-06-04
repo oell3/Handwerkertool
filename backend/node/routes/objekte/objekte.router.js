@@ -6,30 +6,19 @@ import { getallObjekte, getallObjektebyKunde } from './objekte.function.js';
 const router = express.Router()
 
 router.get('/',  async (req, res) => {
-   const mandantId = req.user.mandant_id
-  const data = await getallObjekte();
+   const mandantId = req.user.mandantid
+  const data = await getallObjekte(mandantId);
 
-  res.json( {items: data.objekte.map((o) =>({
-    id: o.ID,
-    adresse: o.Adresse,
-    plz: o.PLZ,
-    stadt: o.Stadt,
-    kundenId: o.Kunden_ID
-  }))})
+  res.json(data)
 })
 
 
 router.get('/:id/kunde', async (req, res) => {
-   const mandantId = req.user.mandant_id
+   const mandantId = req.user.mandantid
 
   const data = await getallObjektebyKunde(req.params.id);
 
-  res.json({items: data.map((o) =>({
-    id: o.ID,
-    adresse: o.Adresse,
-    plz: o.PLZ,
-    stadt: o.Stadt 
-  }))});
+  res.json(data);
 })
 
 export default router;

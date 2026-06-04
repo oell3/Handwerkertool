@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-einstellungen',
   imports: [],
   templateUrl: './einstellungen.html',
-  styleUrl: './einstellungen.scss',
+  styleUrls: ['./einstellungen.scss'],
 })
-export class Einstellungen {}
+export class EinstellungenComponent {}

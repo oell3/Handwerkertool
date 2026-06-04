@@ -24,7 +24,7 @@
 input,
 select,
 textarea {
-  width: 100%;
+  margin-bottom: 12px;
   min-height: 38px;
   border: 1px solid #d2d6dc;
   border-radius: 16px;
@@ -134,10 +134,35 @@ textarea:focus {
   border-bottom: none;
 }
 
+
+.kalkulation {
+  border: 1px solid #e2e8f0;
+  border-radius: 24px;
+  background: #f9fbff;
+  padding: 20px 22px;
+  margin-right: 150px;
+}
+.calc-row{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 8px 12px;
+ 
+}
+
+.rsk{
+  margin-right: 8px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  
+  padding: 8px 12px;
+}
+
 .group-table input,
 .group-table select {
   width: 100%;
-  min-height: 44px;
+  min-height: 20px;
   border: 1px solid #d1d5db;
   border-radius: 16px;
   padding: 12px 14px;
@@ -169,11 +194,21 @@ textarea:focus {
 }
 
   .quill-editor {
+    height: 100%;
+    margin-bottom: 12px;
     min-height: 180px;
     border: 1px solid #d1d5db;
     border-radius: 16px;
     background: #ffffff;
     overflow: hidden;
+  }
+
+  .ql-container {
+    height: 100%;
+  }
+
+  .group{
+    margin-bottom: 20px;
   }
 
 .group-actions button {

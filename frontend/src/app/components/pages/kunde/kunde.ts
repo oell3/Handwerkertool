@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-kunde',
   imports: [],
   templateUrl: './kunde.html',
-  styleUrl: './kunde.scss',
+  styleUrls: ['./kunde.scss'],
 })
-export class Kunde {}
+export class KundeComponent {}

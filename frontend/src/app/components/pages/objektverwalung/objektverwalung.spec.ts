@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Objektverwalung } from './objektverwalung';
+import { ObjektverwaltungComponent } from './objektverwalung';
 
 describe('Objektverwalung', () => {
-  let component: Objektverwalung;
-  let fixture: ComponentFixture<Objektverwalung>;
+  let component: ObjektverwaltungComponent;
+  let fixture: ComponentFixture<ObjektverwaltungComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Objektverwalung],
+      imports: [ObjektverwaltungComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Objektverwalung);
+    fixture = TestBed.createComponent(ObjektverwaltungComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

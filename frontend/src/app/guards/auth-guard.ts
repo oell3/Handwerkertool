@@ -4,41 +4,19 @@ import { AuthService } from '../service/auth/auth';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 
-
 export const authGuard: CanActivateFn = () => {
-console.log('Guard läuft');
-    const auth = inject(AuthService);
-    const router = inject(Router);
+  const auth = inject(AuthService);
+  const router = inject(Router);
 
-     
-    return auth.checkAuth().pipe(
-            
+  return auth.checkAuth().pipe(
+    map((response: any) => {
+      if (response.authenticated) {
+        return true;
+      }
 
-
-    map((response:any) => {
-
-        if(response.authenticated){
-
-            return true;
-
-        }
-
-        return router.createUrlTree(
-            ['/login']
-        );
-
+      return router.createUrlTree(['/login']);
     }),
 
-    catchError(() =>
-
-        of(
-            router.createUrlTree(
-                ['/login']
-            )
-        )
-
-    )
-
-);
-
+    catchError(() => of(router.createUrlTree(['/login']))),
+  );
 };

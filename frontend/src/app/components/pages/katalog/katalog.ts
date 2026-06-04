@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-katalog',
   imports: [],
   templateUrl: './katalog.html',
-  styleUrl: './katalog.scss',
+  styleUrls: ['./katalog.scss'],
 })
-export class Katalog {}
+export class KatalogComponent {}

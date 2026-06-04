@@ -12,6 +12,7 @@
         "@schematics/angular:component": {
           "style": "scss"
         }
+        
       },
       "root": "",
       "sourceRoot": "src",
@@ -68,7 +69,10 @@
               "buildTarget": "crm:build:development"
             }
           },
-          "defaultConfiguration": "development"
+          "defaultConfiguration": "development",
+          "options": {
+            "proxyConfig": "proxy.conf.json" 
+          }
         },
         "test": {
           "builder": "@angular/build:unit-test"

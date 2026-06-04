@@ -1,20 +1,22 @@
 import { HttpClient } from '@angular/common/http';
-import { AfterViewInit,Component,inject, signal,ElementRef, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
 import TomSelect from 'tom-select';
 import { QuillModule } from 'ngx-quill';
 import { FormsModule } from '@angular/forms';
 
-
 @Component({
   selector: 'app-dashboard',
-  
-  imports: [
-    QuillModule,
-    FormsModule],
+  imports: [QuillModule, FormsModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  styleUrls: ['./dashboard.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-
-export class Dashboard {
-  
-}
+export class DashboardComponent {}

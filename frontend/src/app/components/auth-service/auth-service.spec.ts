@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AuthService } from './auth-service';
+import { AuthServiceComponent } from './auth-service';
 
-describe('AuthService', () => {
-  let component: AuthService;
-  let fixture: ComponentFixture<AuthService>;
+describe('AuthServiceComponent', () => {
+  let component: AuthServiceComponent;
+  let fixture: ComponentFixture<AuthServiceComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AuthService],
+      imports: [AuthServiceComponent],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(AuthService);
+    fixture = TestBed.createComponent(AuthServiceComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

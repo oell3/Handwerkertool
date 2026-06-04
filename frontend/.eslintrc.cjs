@@ -1,0 +1,42 @@
+module.exports = {
+  root: true,
+  ignorePatterns: ['projects/**/*'],
+  parser: '@typescript-eslint/parser',
+  parserOptions: {
+    project: ['tsconfig.json', 'tsconfig.app.json', 'tsconfig.spec.json'],
+    createDefaultProgram: true
+  },
+  extends: [
+    'plugin:@angular-eslint/recommended',
+    'plugin:@angular-eslint/template/process-inline-templates',
+    'plugin:prettier/recommended'
+  ],
+  rules: {
+    '@angular-eslint/directive-selector': [
+      'error',
+      {
+        type: 'attribute',
+        prefix: 'app',
+        style: 'camelCase'
+      }
+    ],
+    '@angular-eslint/component-selector': [
+      'error',
+      {
+        type: 'element',
+        prefix: 'app',
+        style: 'kebab-case'
+      }
+    ],
+    '@angular-eslint/component-class-suffix': 'error',
+    '@angular-eslint/directive-class-suffix': 'error',
+    '@angular-eslint/no-empty-lifecycle-method': 'warn'
+  },
+  overrides: [
+    {
+      files: ['**/*.html'],
+      extends: ['plugin:@angular-eslint/template/recommended', 'plugin:prettier/recommended'],
+      rules: {}
+    }
+  ]
+};

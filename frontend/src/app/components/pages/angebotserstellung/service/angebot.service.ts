@@ -1,17 +1,14 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CalculatorService } from './calculator';
 import { StateService } from './state';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AngebotService {
   private angebotId: number | null = null;
-
-  constructor(
-    private readonly calculator: CalculatorService,
-    private readonly state: StateService
-  ) {}
+  private readonly calculator = inject(CalculatorService);
+  private readonly state = inject(StateService);
 
   buildPayload() {
     const state = this.state.value;
@@ -30,7 +27,7 @@ export class AngebotService {
       projekt: state.angebot.projektId,
       Betrag: this.calculator.getTotal(state),
       Datum: state.angebot.datum || new Date().toLocaleDateString('de-DE'),
-      Status: 'Entwurf'
+      Status: 'Entwurf',
     };
 
     const gruppen = state.angebot.groups.map((group, index) => ({
@@ -38,14 +35,14 @@ export class AngebotService {
       tempId: `group-${group.id}`,
       nr: index + 1,
       bezeichnung: group.name || `Leistungsgruppe ${index + 1}`,
-      sortierung: index + 1
+      sortierung: index + 1,
     }));
 
     const groupTempIds = new Map<number, string>(
-      state.angebot.groups.map(group => [group.id, `group-${group.id}`])
+      state.angebot.groups.map((group) => [group.id, `group-${group.id}`]),
     );
 
-    const positionen = state.angebot.groups.flatMap(group =>
+    const positionen = state.angebot.groups.flatMap((group) =>
       group.rows.map((row, index) => ({
         id: row.id,
         group_id: groupTempIds.get(group.id),
@@ -64,8 +61,8 @@ export class AngebotService {
         ep: Number(row.ep || 0),
         gp: Number(row.gp || 0),
         sortierung: index + 1,
-        bemerkung: row.remark || ''
-      }))
+        bemerkung: row.remark || '',
+      })),
     );
 
     return { angebot, gruppen, positionen };
@@ -79,7 +76,7 @@ export class AngebotService {
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ angebotId: this.angebotId, ...payload })
+      body: JSON.stringify({ angebotId: this.angebotId, ...payload }),
     });
 
     if (!res.ok) {
@@ -97,7 +94,7 @@ export class AngebotService {
     }
 
     const res = await fetch(`/angebote/${this.angebotId}/create`, {
-      method: 'POST'
+      method: 'POST',
     });
 
     if (!res.ok) {
