@@ -21,6 +21,24 @@
   font-weight: 600;
 }
 
+.dragicon{
+  width: 24px;
+  height: 24px;
+  opacity: 0.5;
+}
+.dragicon img{
+  width: 100%;
+  height: 100%;
+}
+.dragicon:hover{
+  cursor:grab;
+  opacity: 1.0;
+}
+
+.menge,.ek, .aufschlag, .rabatt{
+  width: 60px !important;
+}
+
 input,
 select,
 textarea {
