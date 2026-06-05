@@ -58,6 +58,9 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   private allProjekte: Array<any> = [];
   private allAnsprechpartner: Array<any> = [];
 
+  private draggedRowData: { groupId: number; rowId: number; typ: string } | null = null;
+  private draggedGroupId: number | null = null;
+
   private einleitungQuill: any = null;
   private schlussQuill: any = null;
 
@@ -211,17 +214,17 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
       const normalized = String(kundenId);
       this.objekte.set(
         this.allObjekte.filter(
-          (o) => String(o.kundenId || o.Kunden_ID || o.KundenId || o.KundenId) === normalized,
+          (o) => String(o.Kunden_ID) === normalized,
         ),
       );
       this.projekte.set(
         this.allProjekte.filter(
-          (p) => String(p.kundenId || p.Kunden_ID || p.KundenId) === normalized,
+          (p) => String( p.Kunden_ID) === normalized,
         ),
       );
       this.ansprechpartner.set(
         this.allAnsprechpartner.filter(
-          (a) => String(a.kundenId || a.Kunden_ID || a.KundenId) === normalized,
+          (a) => String( a.Kunden_ID) === normalized,
         ),
       );
     } else {
@@ -296,6 +299,7 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
               gruppeId: [row.gruppeId ?? null],
               parentMischId: [row.parentMischId ?? null],
               parentGruppeId: [row.parentGruppeId ?? null],
+              collapsed: [row.collapsed ?? false],
               remark: [row.remark || ''],
             }),
           ),
@@ -341,6 +345,7 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
       gruppeId: [null],
       parentMischId: [null],
       parentGruppeId: [null],
+      collapsed: [false],
       remark: [''],
     });
   }
@@ -353,6 +358,106 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   removeGroup(index: number) {
     this.groups.removeAt(index);
     this.syncState();
+  }
+
+  toggleGroup(index: number) {
+    const group = this.groups.at(index);
+    group.get('collapsed')?.setValue(!group.get('collapsed')?.value);
+    this.syncState();
+  }
+
+  toggleRowCollapse(groupId: number, rowId: number) {
+    const groupIndex = this.findGroupIndexById(groupId);
+    const rowIndex = this.findRowIndexById(groupIndex, rowId);
+    if (groupIndex < 0 || rowIndex < 0) {
+      return;
+    }
+    const row = this.getRows(groupIndex).at(rowIndex);
+    row.get('collapsed')?.setValue(!row.get('collapsed')?.value);
+    this.syncState();
+  }
+
+  removeRowFromGroupById(groupId: number, rowId: number) {
+    const groupIndex = this.findGroupIndexById(groupId);
+    const rowIndex = this.findRowIndexById(groupIndex, rowId);
+    if (groupIndex < 0 || rowIndex < 0) {
+      return;
+    }
+    this.removeRow(groupIndex, rowIndex);
+  }
+
+  onRowDragEnd() {
+    this.draggedRowData = null;
+  }
+
+  isMixChild(row: any) {
+    return row?.parentMischId != null;
+  }
+
+  isGroupChild(row: any) {
+    return row?.parentGruppeId != null;
+  }
+
+  isChildRow(row: any) {
+    return this.isMixChild(row) || this.isGroupChild(row);
+  }
+
+  private findGroupIndexById(groupId: number) {
+    return this.groups.controls.findIndex((g) => g.value.id === groupId);
+  }
+
+  private findRowIndexById(groupIndex: number, rowId: number) {
+    return this.getRows(groupIndex).controls.findIndex((r) => r.value.id === rowId);
+  }
+
+  getChildRowControls(group: AbstractControl, parentRow: AbstractControl): FormGroup[] {
+    const rows = group.get('rows') as FormArray;
+    return rows.controls.filter(
+      (child) =>
+        child.value.parentMischId === parentRow.value.id || child.value.parentGruppeId === parentRow.value.id,
+    ) as FormGroup[];
+  }
+
+  private collectLinkedRowIds(rows: FormArray, rootRow: any) {
+    const ids = new Set<number>([rootRow.id]);
+    let added = true;
+
+    while (added) {
+      added = false;
+      rows.controls.forEach((ctrl) => {
+        const row = ctrl.value;
+        if (
+          !ids.has(row.id) &&
+          ((row.parentMischId != null && ids.has(row.parentMischId)) ||
+            (row.parentGruppeId != null && ids.has(row.parentGruppeId)))
+        ) {
+          ids.add(row.id);
+          added = true;
+        }
+      });
+    }
+
+    return ids;
+  }
+
+  private extractRowBlock(rows: FormArray, rootRow: AbstractControl) {
+    const ids = this.collectLinkedRowIds(rows, rootRow.value);
+    return rows.controls.filter((ctrl) => ids.has(ctrl.value.id));
+  }
+
+  private removeControls(rows: FormArray, ids: Set<number>) {
+    const indices = rows.controls
+      .map((ctrl, index) => (ids.has(ctrl.value.id) ? index : -1))
+      .filter((index) => index >= 0)
+      .sort((a, b) => b - a);
+
+    for (const index of indices) {
+      rows.removeAt(index);
+    }
+  }
+
+  private moveControls(rows: FormArray, controls: AbstractControl[], insertIndex: number) {
+    controls.forEach((control, offset) => rows.insert(insertIndex + offset, control));
   }
 
   getRows(groupIndex: number): FormArray {
@@ -374,31 +479,86 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   }
 
   removeRow(groupIndex: number, rowIndex: number) {
-    this.getRows(groupIndex).removeAt(rowIndex);
+    const rows = this.getRows(groupIndex);
+    const row = rows.at(rowIndex).value;
+
+    if (row.typ === 'misch' || row.typ === 'gruppe') {
+      const ids = this.collectLinkedRowIds(rows, row);
+      this.removeControls(rows, ids);
+    } else {
+      rows.removeAt(rowIndex);
+    }
+
     this.syncState();
   }
 
   removeRowFromGroup(group: AbstractControl, rowIndex: number) {
-    this.getRowsFromGroup(group).removeAt(rowIndex);
+    const rows = this.getRowsFromGroup(group);
+    const row = rows.at(rowIndex).value;
+
+    if (row.typ === 'misch' || row.typ === 'gruppe') {
+      const ids = this.collectLinkedRowIds(rows, row);
+      this.removeControls(rows, ids);
+    } else {
+      rows.removeAt(rowIndex);
+    }
+
     this.syncState();
   }
 
   getGroupTotal(groupIndex: number) {
     return this.getRows(groupIndex).controls.reduce((sum, control) => {
-      const { gp } = this.calculateRow(control);
+      const row = control.value;
+      if (row.parentMischId != null) {
+        return sum;
+      }
+      const { gp } = this.calculateRow(control, this.groups.at(groupIndex));
       return sum + gp;
     }, 0);
   }
 
   getGroupTotalFromGroup(group: AbstractControl) {
-    return this.getRowsFromGroup(group).controls.reduce((sum, control) => {
-      const { gp } = this.calculateRow(control);
+    const rows = this.getRowsFromGroup(group);
+    return rows.controls.reduce((sum, control) => {
+      const row = control.value;
+      if (row.parentMischId != null) {
+        return sum;
+      }
+      const { gp } = this.calculateRow(control, group);
       return sum + gp;
     }, 0);
   }
 
-  calculateRow(control: AbstractControl) {
+  calculateRow(control: AbstractControl, group?: AbstractControl): { ep: number; gp: number } {
     const row = control.value;
+
+    if (row.typ === 'gruppe') {
+      return {
+        ep: 0,
+        gp: 0,
+      };
+    }
+
+    if (row.typ === 'misch' && group) {
+      const childRows = this.getChildRowControls(group, control);
+      const totals = childRows.reduce(
+        (acc: { menge: number; gp: number }, child: AbstractControl) => {
+          const childCalc = this.calculateRow(child, group);
+          return {
+            menge: acc.menge + Number(child.value.menge || 0),
+            gp: acc.gp + childCalc.gp,
+          };
+        },
+        { menge: 0, gp: 0 },
+      );
+
+      const ep = totals.menge ? totals.gp / totals.menge : 0;
+      return {
+        ep: Number(ep.toFixed(2)),
+        gp: Number(totals.gp.toFixed(2)),
+      };
+    }
+
     const menge = Number(row.menge || 0);
     const ek = Number(row.ek || 0);
     const aufschlag = Number(row.aufschlag || 0);
@@ -411,6 +571,153 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
       ep: Number(ep.toFixed(2)),
       gp: Number((ep * menge).toFixed(2)),
     };
+  }
+
+  onGroupDragStart(event: DragEvent, groupId: number) {
+    this.draggedGroupId = groupId;
+    event.dataTransfer?.setData('text/plain', 'group');
+    event.dataTransfer?.setData('group-id', String(groupId));
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onGroupDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onGroupDrop(event: DragEvent, targetGroupId: number) {
+    event.preventDefault();
+    if (this.draggedGroupId == null || this.draggedGroupId === targetGroupId) {
+      return;
+    }
+
+    const sourceIndex = this.findGroupIndexById(this.draggedGroupId);
+    const targetIndex = this.findGroupIndexById(targetGroupId);
+    if (sourceIndex < 0 || targetIndex < 0) {
+      return;
+    }
+
+    const control = this.groups.at(sourceIndex);
+    this.groups.removeAt(sourceIndex);
+    const insertIndex = sourceIndex < targetIndex ? targetIndex : targetIndex;
+    this.groups.insert(insertIndex, control);
+    this.syncState();
+    this.draggedGroupId = null;
+  }
+
+  onRowDragStart(event: DragEvent, groupId: number, rowId: number) {
+    this.draggedRowData = { groupId, rowId, typ: this.getRows(this.findGroupIndexById(groupId)).at(this.findRowIndexById(this.findGroupIndexById(groupId), rowId)).value.typ };
+    event.dataTransfer?.setData('text/plain', 'row');
+    event.dataTransfer?.setData('row-id', String(rowId));
+    event.dataTransfer?.setData('group-id', String(groupId));
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onRowDragOver(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  private insertDragControls(rows: FormArray, controls: AbstractControl[], targetIndex: number) {
+    const insertIndex = targetIndex < 0 ? rows.length : targetIndex;
+    this.moveControls(rows, controls, Math.min(insertIndex, rows.length));
+  }
+
+  onRowDropToGroup(event: DragEvent, targetGroupId: number) {
+    event.preventDefault();
+    if (!this.draggedRowData) {
+      return;
+    }
+
+    const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
+    const targetGroupIndex = this.findGroupIndexById(targetGroupId);
+    if (sourceGroupIndex < 0 || targetGroupIndex < 0) {
+      return;
+    }
+
+    const sourceRows = this.getRows(sourceGroupIndex);
+    const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
+    if (sourceRowIndex < 0) {
+      return;
+    }
+
+    const sourceRow = sourceRows.at(sourceRowIndex);
+    const targetRows = this.getRows(targetGroupIndex);
+
+    if (this.draggedRowData.typ === 'misch' || this.draggedRowData.typ === 'gruppe') {
+      const block = this.extractRowBlock(sourceRows, sourceRow);
+      this.removeControls(sourceRows, new Set(block.map((ctrl) => ctrl.value.id)));
+      this.insertDragControls(targetRows, block, targetRows.length);
+    } else {
+      sourceRow.get('parentMischId')?.setValue(null);
+      sourceRow.get('parentGruppeId')?.setValue(null);
+      sourceRows.removeAt(sourceRowIndex);
+      targetRows.insert(targetRows.length, sourceRow);
+    }
+
+    this.syncState();
+    this.draggedRowData = null;
+  }
+
+  onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number) {
+    event.preventDefault();
+    if (!this.draggedRowData) {
+      return;
+    }
+
+    const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
+    const targetGroupIndex = this.findGroupIndexById(targetGroupId);
+    if (sourceGroupIndex < 0 || targetGroupIndex < 0) {
+      return;
+    }
+
+    const sourceRows = this.getRows(sourceGroupIndex);
+    const targetRows = this.getRows(targetGroupIndex);
+    const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
+    const targetRowIndex = this.findRowIndexById(targetGroupIndex, targetRowId);
+    if (sourceRowIndex < 0 || targetRowIndex < 0) {
+      return;
+    }
+
+    const sourceRow = sourceRows.at(sourceRowIndex);
+    const targetRow = targetRows.at(targetRowIndex);
+    const targetRowValue = targetRow.value;
+
+    if (this.draggedRowData.typ === 'misch' || this.draggedRowData.typ === 'gruppe') {
+      const block = this.extractRowBlock(sourceRows, sourceRow);
+      this.removeControls(sourceRows, new Set(block.map((ctrl) => ctrl.value.id)));
+      const insertIndex = sourceGroupIndex === targetGroupIndex && sourceRowIndex < targetRowIndex ? targetRowIndex - block.length + 1 : targetRowIndex;
+      this.insertDragControls(targetRows, block, insertIndex);
+    } else if (targetRowValue.typ === 'misch' || targetRowValue.typ === 'gruppe') {
+      sourceRow.get('parentMischId')?.setValue(targetRowValue.typ === 'misch' ? targetRowValue.id : null);
+      sourceRow.get('parentGruppeId')?.setValue(targetRowValue.typ === 'gruppe' ? targetRowValue.id : null);
+      if (sourceGroupIndex === targetGroupIndex) {
+        sourceRows.removeAt(sourceRowIndex);
+      } else {
+        this.getRows(sourceGroupIndex).removeAt(sourceRowIndex);
+      }
+      const insertIndex = targetRowIndex + this.getChildRowControls(this.groups.at(targetGroupIndex), targetRow).length + 1;
+      this.insertDragControls(targetRows, [sourceRow], insertIndex);
+    } else {
+      sourceRow.get('parentMischId')?.setValue(null);
+      sourceRow.get('parentGruppeId')?.setValue(null);
+      if (sourceGroupIndex === targetGroupIndex) {
+        const existing = this.extractRowBlock(sourceRows, sourceRow);
+        this.removeControls(sourceRows, new Set(existing.map((ctrl) => ctrl.value.id)));
+        const insertIndex = sourceRowIndex < targetRowIndex ? targetRowIndex - existing.length + 1 : targetRowIndex;
+        this.insertDragControls(targetRows, [sourceRow], insertIndex);
+      } else {
+        this.getRows(sourceGroupIndex).removeAt(sourceRowIndex);
+        this.insertDragControls(targetRows, [sourceRow], targetRowIndex);
+      }
+    }
+
+    this.syncState();
+    this.draggedRowData = null;
   }
 
   getGrandTotal() {

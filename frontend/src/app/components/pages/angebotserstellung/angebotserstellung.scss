@@ -83,6 +83,49 @@ textarea:focus {
   min-width: 240px;
 }
 
+.group-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.row-typ-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-row {
+  border: none;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.toggle-row:hover {
+  background: #dbeafe;
+}
+
+.row-child td {
+  padding-left: 32px;
+  background: #fcfdff;
+}
+
+.child-row {
+  background: #fafbff;
+}
+
+.drop-target-row td {
+  padding: 18px 16px;
+  color: #334155;
+  font-style: italic;
+  background: #f1f5f9;
+  text-align: center;
+}
+
 .group-header input {
   width: 100%;
   border: 1px solid #cbd5e1;

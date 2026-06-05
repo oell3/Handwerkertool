@@ -17,6 +17,7 @@ export interface AngebotRow {
   gruppeId?: number | null;
   parentMischId?: number | null;
   parentGruppeId?: number | null;
+  collapsed?: boolean;
   remark?: string | null;
 }
 
