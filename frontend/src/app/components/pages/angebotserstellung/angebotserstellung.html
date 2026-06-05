@@ -109,7 +109,7 @@
 
         <div class="card">
           <h3>Leistungen</h3>
-          <section class="groups" formArrayName="groups">
+                    <section class="groups" formArrayName="groups">
             @for (group of groups.controls; track group.value.id; let groupIndex = $index) {
               <div class="group" [formGroupName]="groupIndex">
                 <div
@@ -124,7 +124,7 @@
                     <input formControlName="name" type="text" />
                   </label>
                   <div class="group-header-actions">
-                    <button type="button" (click)="toggleGroup(group.value.id)">
+                    <button type="button" (click)="toggleGroup(groupIndex)">
                       {{ group.value.collapsed ? '▶' : '▼' }} Gruppe
                     </button>
                     <button type="button" (click)="removeGroup(groupIndex)">
@@ -138,6 +138,9 @@
                     <table class="group-table">
                       <thead>
                         <tr>
+                          <th></th>
+                          <th>Nummer</th>
+                          <th></th>            
                           <th>Typ</th>
                           <th>Menge</th>
                           <th>Bezeichnung</th>
@@ -155,76 +158,76 @@
                         (drop)="onRowDropToGroup($event, group.value.id)"
                       >
                         @for (row of getRowsFromGroup(group).controls; track row.value.id; let rowIndex = $index) {
-                          @if (!isChildRow(row.value)) {
-                            <tr
-                              [formGroupName]="rowIndex"
-                              draggable="true"
-                              (dragstart)="onRowDragStart($event, group.value.id, row.value.id)"
-                              (dragover)="onRowDragOver($event)"
-                              (drop)="onRowDrop($event, group.value.id, row.value.id)"
-                              (dragend)="onRowDragEnd()"
-                              [class.child-row]="isMixChild(row.value) || isGroupChild(row.value)"
-                            >
-                              <td>
-                                <div class="row-typ-cell">
-                                  @if (row.value.typ === 'misch' || row.value.typ === 'gruppe') {
-                                    <button
-                                      type="button"
-                                      class="toggle-row"
-                                      (click)="toggleRowCollapse(group.value.id, row.value.id)"
-                                    >
-                                      {{ row.value.collapsed ? '▶' : '▼' }}
-                                    </button>
-                                  }
-                                  <select formControlName="typ">
-                                    @for (option of typeOptions; track option.value) {
-                                      <option [value]="option.value">{{ option.label }}</option>
-                                    }
-                                  </select>
-                                </div>
-                              </td>
-                              <td><input formControlName="menge" type="number" min="0" /></td>
-                              <td><input formControlName="bezeichnung" type="text" /></td>
-                              <td><input formControlName="ek" type="number" min="0" step="0.01" /></td>
-                              <td><input formControlName="aufschlag" type="number" min="0" step="0.1" /></td>
-                              <td><input formControlName="rabatt" type="number" min="0" step="0.1" /></td>
-                              <td>{{ calculateRow(row, group).ep | number: '1.2-2' }}</td>
-                              <td>{{ calculateRow(row, group).gp | number: '1.2-2' }}</td>
-                              <td>
-                                <button type="button" (click)="removeRowFromGroup(group, rowIndex)">X</button>
-                              </td>
-                            </tr>
+                          <tr
+                            [formGroupName]="rowIndex"
+                            
+                            (dragover)="onRowDragOver($event)"
+                            (drop)="onRowDrop($event, group.value.id, row.value.id)"
+                            (dragend)="onRowDragEnd()"
+                            [class.child-row]="isMixChild(row.value) || isGroupChild(row.value)"
+                          >
+                          <td class="dragicon"><img src="/assets/drag-handle.svg" alt="Drag handle"(dragstart)="onRowDragStart($event, group.value.id, row.value.id)"
+                            draggable="true"/></td>
+                          <td>{{groupIndex + 1}}.{{rowIndex + 1}}</td>
+                            <td>
+                              <div class="row-typ-cell">
+                                @if (row.value.typ === 'misch' || row.value.typ === 'gruppe') {
+                                  <button
+                                    type="button"
+                                    class="toggle-row"
+                                    (click)="toggleRowCollapse(group.value.id, row.value.id)"
+                                  >
+                                    {{ row.value.collapsed ? '▶' : '▼' }}
+                                  </button>
+                                }
+                              </div>
+                               
+                            </td>
+                            <td><select formControlName="typ">
+                        @for (option of typeOptions; track $index) {
+                        <option [value]="option.value">{{ option.label }}</option>
+                        }
+                      </select></td>
+                            <td><input formControlName="menge" type="number" min="0" class="menge"></td>
+                            <td><input formControlName="bezeichnung" type="text"></td>
+                            <td><input formControlName="ek" type="number" min="0" step="0.01" class="ek"></td>
+                            <td><input formControlName="aufschlag" type="number" min="0" step="0.1" class="aufschlag"></td>
+                            <td><input formControlName="rabatt" type="number" min="0" step="0.1" class="rabatt"></td>
+                            <td>{{ calculateRow(row, group).ep | number: '1.2-2' }}</td>
+                            <td>{{ calculateRow(row, group).gp | number: '1.2-2' }}</td>
+                            <td>
+                              <button type="button" (click)="removeRowFromGroup(group, rowIndex)">X</button>
+                            </td>
+                          </tr>
 
-                            @if ((row.value.typ === 'misch' || row.value.typ === 'gruppe') && !row.value.collapsed) {
-                              @for (childRow of getChildRowControls(group, row); track childRow.value.id) {
-                                <tr
-                                  [formGroup]="childRow"
-                                  draggable="true"
-                                  (dragstart)="onRowDragStart($event, group.value.id, childRow.value.id)"
-                                  (dragover)="onRowDragOver($event)"
-                                  (drop)="onRowDrop($event, group.value.id, childRow.value.id)"
-                                  (dragend)="onRowDragEnd()"
-                                  class="row-child"
-                                >
-                                  <td></td>
-                                  <td><input formControlName="menge" type="number" min="0" /></td>
-                                  <td><input formControlName="bezeichnung" type="text" /></td>
-                                  <td><input formControlName="ek" type="number" min="0" step="0.01" /></td>
-                                  <td><input formControlName="aufschlag" type="number" min="0" step="0.1" /></td>
-                                  <td><input formControlName="rabatt" type="number" min="0" step="0.1" /></td>
-                                  <td>{{ calculateRow(childRow, group).ep | number: '1.2-2' }}</td>
-                                  <td>{{ calculateRow(childRow, group).gp | number: '1.2-2' }}</td>
-                                  <td>
-                                    <button type="button" (click)="removeRowFromGroupById(group.value.id, childRow.value.id)">X</button>
-                                  </td>
-                                </tr>
-                              }
+                          @if ((row.value.typ === 'misch' || row.value.typ === 'gruppe') && !row.value.collapsed) {
+                            @for (childRow of getChildRowControls(group, row); track childRow.value.id) {
+                              <tr
+                                [formGroup]="childRow"
+                                draggable="true"
+                                (dragstart)="onRowDragStart($event, group.value.id, childRow.value.id)"
+                                (dragover)="onRowDragOver($event)"
+                                (drop)="onRowDrop($event, group.value.id, childRow.value.id)"
+                                (dragend)="onRowDragEnd()"
+                                class="row-child"
+                              >
+                                <td></td>
+                                <td><input formControlName="typ" type="text"></td>
+                                <td><input formControlName="menge" type="number" min="0"></td>
+                                <td><input formControlName="bezeichnung" type="text"></td>
+                                <td><input formControlName="ek" type="number" min="0" step="0.01"></td>
+                                <td><input formControlName="aufschlag" type="number" min="0" step="0.1"></td>
+                                <td><input formControlName="rabatt" type="number" min="0" step="0.1"></td>
+                                <td>{{ calculateRow(childRow, group).ep | number: '1.2-2' }}</td>
+                                <td>{{ calculateRow(childRow, group).gp | number: '1.2-2' }}</td>
+                                <td>
+                                  <button type="button" (click)="removeRowFromGroupById(group.value.id, childRow.value.id)">X</button>
+                                </td>
+                              </tr>
                             }
                           }
                         }
-                        <tr class="drop-target-row" (dragover)="onRowDragOver($event)" (drop)="onRowDropToGroup($event, group.value.id)">
-                          <td colspan="9">Hierher ziehen, um an das Ende der Gruppe zu verschieben</td>
-                        </tr>
+                        <tr class="drop-target-row" (dragover)="onRowDragOver($event)" (drop)="onRowDropToGroup($event, group.value.id)"></tr>
                       </tbody>
                     </table>
 
@@ -312,7 +315,7 @@
               </div>
               <div class="calc-row tooltip">
                 <span>Marge %</span>
-                <span>{{ ((getGrandTotal() - (materialKosten + lohnKosten + sonstigeKosten)) / (getGrandTotal() || 1)) * 100 | number: '1.2-0' }}%</span>
+                <span>{{ ((getGrandTotal() - (materialKosten + lohnKosten + sonstigeKosten)) / (getGrandTotal() || 1)) * 100 | number: '1.2-2' }}%</span>
               </div>
             </div>
           </aside>

@@ -214,17 +214,17 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
       const normalized = String(kundenId);
       this.objekte.set(
         this.allObjekte.filter(
-          (o) => String(o.Kunden_ID) === normalized,
+          (o) => String(o.kunden_id) === normalized,
         ),
       );
       this.projekte.set(
         this.allProjekte.filter(
-          (p) => String( p.Kunden_ID) === normalized,
+          (p) => String( p.kunden_id) === normalized,
         ),
       );
       this.ansprechpartner.set(
         this.allAnsprechpartner.filter(
-          (a) => String( a.Kunden_ID) === normalized,
+          (a) => String( a.kunden_id) === normalized,
         ),
       );
     } else {
@@ -279,33 +279,35 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   }
 
   private buildForm() {
-    const groups = this.state.value.angebot.groups.map((group) =>
-      this.fb.group({
-        id: [group.id],
-        name: [group.name || `Leistungsgruppe ${group.id}`, Validators.required],
-        collapsed: [group.collapsed ?? false],
-        rows: this.fb.array(
-          group.rows.map((row) =>
-            this.fb.group({
-              id: [row.id],
-              typ: [row.typ || 'material', Validators.required],
-              bezeichnung: [row.bezeichnung || ''],
-              menge: [row.menge ?? 1, Validators.min(0)],
-              ek: [row.ek ?? 0, Validators.min(0)],
-              aufschlag: [row.aufschlag ?? 0, Validators.min(0)],
-              rabatt: [row.rabatt ?? 0, Validators.min(0)],
-              einheit: [row.einheit || 'Stk'],
-              mischId: [row.mischId ?? null],
-              gruppeId: [row.gruppeId ?? null],
-              parentMischId: [row.parentMischId ?? null],
-              parentGruppeId: [row.parentGruppeId ?? null],
-              collapsed: [row.collapsed ?? false],
-              remark: [row.remark || ''],
-            }),
-          ),
-        ),
-      }),
-    );
+ const groups = this.state.value.angebot.groups.map((group) =>
+   this.fb.group({
+     id: [group.id],
+     name: [group.name || `Leistungsgruppe ${group.id}`, Validators.required],
+     collapsed: [group.collapsed ?? false],
+     rows: this.fb.array(
+       group.rows.map((row) =>
+         this.fb.group({
+           id: [row.id],
+           typ: [row.typ || 'material', Validators.required],
+           bezeichnung: [row.bezeichnung || ''],
+           menge: [row.menge ?? 1, Validators.min(0)],
+           ek: [row.ek ?? 0, Validators.min(0)],
+           aufschlag: [row.aufschlag ?? 0, Validators.min(0)],
+           rabatt: [row.rabatt ?? 0, Validators.min(0)],
+           einheit: [row.einheit || 'Stk'],
+           mischId: [row.mischId ?? null],
+           gruppeId: [row.gruppeId ?? null],
+           parentMischId: [row.parentMischId ?? null],
+           parentGruppeId: [row.parentGruppeId ?? null],
+           collapsed: [row.collapsed ?? false],
+           remark: [row.remark || ''],
+           rowNumber: [group.rows.indexOf(row) + 1] // Hinzufügen der Zeilennummer
+         })
+       )
+     ),
+   })
+ );
+
 
     this.form = this.fb.group({
       title: [this.state.value.angebot.title || ''],
@@ -361,6 +363,7 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   }
 
   toggleGroup(index: number) {
+    console.log("gruppe zu oder aufmachen", index);
     const group = this.groups.at(index);
     group.get('collapsed')?.setValue(!group.get('collapsed')?.value);
     this.syncState();
