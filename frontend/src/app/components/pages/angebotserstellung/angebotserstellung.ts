@@ -567,53 +567,70 @@ private moveControls(rows: FormArray, controls: AbstractControl[], insertIndex: 
     }, 0);
   }
 
-  calculateRow(control: AbstractControl, group?: AbstractControl): { ep: number; gp: number } {
-    const row = control.value;
-
-    /* if (row.typ === 'gruppe') {
-      return {
-        ep: 0,
-        gp: 0,
-      };
-    } */
-
-   if (row.typ === 'misch' && group) {
-  const childRows = this.getChildRowControls(group, control);
-  
-
-    const totalEp = childRows.reduce((sum: number, child: AbstractControl) => {
-    return sum + this.calculateRow(child, group).ep;
-  }, 0);
-
-    const menge = Number(row.menge || 0);
-    const ek = Number(totalEp)
-    const aufschlag = Number(row.aufschlag || 0);
-    const rabatt = Number(row.rabatt || 0);
-
-    let ep = ek + ek * (aufschlag / 100);
-    ep -= ep * (rabatt / 100);
-
-    return {
-      ep: Number(ep.toFixed(2)),
-      gp: Number((ep * menge).toFixed(2)),
-    };
-
+  getRowDisplayNumber(group: AbstractControl, rowId: number): number {
+  const rows = this.getRowsFromGroup(group);
+  let counter = 0;
+  for (const ctrl of rows.controls) {
+    const val = ctrl.value;
+    if (val.typ === 'gruppe') continue;
+    counter++;
+    if (val.id === rowId) return counter;
+  }
+  return counter;
 }
 
+  calculateRow(control: AbstractControl, group?: AbstractControl): { ep: number; gp: number } {
+  const row = control.value;
 
-    const menge = Number(row.menge || 0);
-    const ek = Number(row.ek || 0);
-    const aufschlag = Number(row.aufschlag || 0);
-    const rabatt = Number(row.rabatt || 0);
+  if (row.typ === 'misch' && group) {
+    const childRows = this.getChildRowControls(group, control);
+    const totalGp = childRows.reduce((sum: number, child: AbstractControl) => {
+      return sum + this.calculateChildRow(child, control).gp;
+    }, 0);
 
-    let ep = ek + ek * (aufschlag / 100);
-    ep -= ep * (rabatt / 100);
+    const mischMenge = Number(row.menge || 0);
+    const ep = mischMenge ? totalGp / mischMenge : 0;
 
     return {
       ep: Number(ep.toFixed(2)),
-      gp: Number((ep * menge).toFixed(2)),
+      gp: Number(totalGp.toFixed(2)),
     };
   }
+
+  const menge = Number(row.menge || 0);
+  const ek = Number(row.ek || 0);
+  const aufschlag = Number(row.aufschlag || 0);
+  const rabatt = Number(row.rabatt || 0);
+
+  let ep = ek + ek * (aufschlag / 100);
+  ep -= ep * (rabatt / 100);
+
+  return {
+    ep: Number(ep.toFixed(2)),
+    gp: Number((ep * menge).toFixed(2)),
+  };
+}
+
+  calculateChildRow(
+  childControl: AbstractControl,
+  parentControl: AbstractControl
+): { ep: number; gp: number } {
+  const child = childControl.value;
+  const mischMenge = Number(parentControl.value.menge || 0);
+
+  const menge = Number(child.menge || 0);
+  const ek = Number(child.ek || 0);
+  const aufschlag = Number(child.aufschlag || 0);
+  const rabatt = Number(child.rabatt || 0);
+
+  let ep = ek + ek * (aufschlag / 100);
+  ep -= ep * (rabatt / 100);
+
+  return {
+    ep: Number(ep.toFixed(2)),
+    gp: Number((ep * menge * mischMenge).toFixed(2)),
+  };
+}
 
   onGroupDragStart(event: DragEvent, groupId: number) {
     this.draggedGroupId = groupId;
@@ -800,29 +817,45 @@ updateParentReferences(row: any, mischId: number | null, gruppeId: number | null
   lohnKosten = 0;
   sonstigeKosten = 0;
 
-  computeKosten() {
-    let material = 0;
-    let lohn = 0;
-    let sonstiges = 0;
+computeKosten() {
+  let material = 0;
+  let lohn = 0;
+  let sonstiges = 0;
 
-    this.groups.controls.forEach((groupCtrl) => {
-      const rows = (groupCtrl.get('rows') as FormArray).controls;
-      rows.forEach((r) => {
-        const val = r.value;
-        const menge = Number(val.menge || 0);
-        const ek = Number(val.ek || 0);
-        const kosten = menge * ek;
+  this.groups.controls.forEach((groupCtrl) => {
+    const rows = (groupCtrl.get('rows') as FormArray).controls;
+
+    rows.forEach((r) => {
+      const val = r.value;
+
+      if (val.typ === 'misch') {
+        const mischMenge = Number(val.menge || 0);
+        const children = rows.filter(
+          c => c.value.parentMischId === val.id
+        );
+        children.forEach((child) => {
+          const childVal = child.value;
+          const kosten = mischMenge * Number(childVal.menge || 0) * Number(childVal.ek || 0);
+          if (childVal.typ === 'material') material += kosten;
+          else if (childVal.typ === 'lohn') lohn += kosten;
+          else if (childVal.typ === 'sonstiges') sonstiges += kosten;
+        });
+      } else if (val.typ === 'gruppe') {
+        // Gruppe selbst überspringen, Kinder werden via parentGruppeId separat behandelt
+      } else if (val.parentMischId == null && val.parentGruppeId == null) {
+        // Nur Top-Level-Rows ohne Parent normal berechnen
+        const kosten = Number(val.menge || 0) * Number(val.ek || 0);
         if (val.typ === 'material') material += kosten;
         else if (val.typ === 'lohn') lohn += kosten;
         else if (val.typ === 'sonstiges') sonstiges += kosten;
-      });
+      }
     });
+  });
 
-    this.materialKosten = material;
-    this.lohnKosten = lohn;
-    this.sonstigeKosten = sonstiges;
-  }
-
+  this.materialKosten = material;
+  this.lohnKosten = lohn;
+  this.sonstigeKosten = sonstiges;
+}
   async saveOffer() {
     try {
       await this.angebotService.save();
