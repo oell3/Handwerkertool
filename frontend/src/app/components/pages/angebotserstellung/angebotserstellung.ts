@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, AfterViewInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef,Component, OnInit, AfterViewInit, inject } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -57,6 +57,9 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   private allObjekte: Array<any> = [];
   private allProjekte: Array<any> = [];
   private allAnsprechpartner: Array<any> = [];
+
+
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private draggedRowData: { groupId: number; rowId: number; typ: string } | null = null;
   private draggedGroupId: number | null = null;
@@ -278,33 +281,33 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
     return this.form.get('groups') as FormArray;
   }
 
-  private buildForm() {
- const groups = this.state.value.angebot.groups.map((group) =>
-   this.fb.group({
-     id: [group.id],
-     name: [group.name || `Leistungsgruppe ${group.id}`, Validators.required],
-     collapsed: [group.collapsed ?? false],
-     rows: this.fb.array(
-       group.rows.map((row) =>
-         this.fb.group({
-           id: [row.id],
-           typ: [row.typ || 'material', Validators.required],
-           bezeichnung: [row.bezeichnung || ''],
-           menge: [row.menge ?? 1, Validators.min(0)],
-           ek: [row.ek ?? 0, Validators.min(0)],
-           aufschlag: [row.aufschlag ?? 0, Validators.min(0)],
-           rabatt: [row.rabatt ?? 0, Validators.min(0)],
-           einheit: [row.einheit || 'Stk'],
-           mischId: [row.mischId ?? null],
-           gruppeId: [row.gruppeId ?? null],
-           parentMischId: [row.parentMischId ?? null],
-           parentGruppeId: [row.parentGruppeId ?? null],
-           collapsed: [row.collapsed ?? false],
-           remark: [row.remark || ''],
-           rowNumber: [group.rows.indexOf(row) + 1] // Hinzufügen der Zeilennummer
-         })
-       )
-     ),
+    private buildForm() {
+      const groups = this.state.value.angebot.groups.map((group) =>
+        this.fb.group({
+          id: [group.id],
+          name: [group.name || `Leistungsgruppe ${group.id}`, Validators.required],
+          collapsed: [group.collapsed ?? false],
+          rows: this.fb.array(
+            group.rows.map((row) =>
+              this.fb.group({
+                id: [row.id],
+                typ: [row.typ || 'material', Validators.required],
+                bezeichnung: [row.bezeichnung || ''],
+                menge: [row.menge ?? 1, Validators.min(0)],
+                ek: [row.ek ?? 0, Validators.min(0)],
+                aufschlag: [row.aufschlag ?? 0, Validators.min(0)],
+                rabatt: [row.rabatt ?? 0, Validators.min(0)],
+                einheit: [row.einheit || 'Stk'],
+            mischId: [row.mischId ?? null],
+            gruppeId: [row.gruppeId ?? null],
+            parentMischId: [row.parentMischId ?? null],
+            parentGruppeId: [row.parentGruppeId ?? null],
+            collapsed: [row.collapsed ?? false],
+            remark: [row.remark || ''],
+            rowNumber: [group.rows.indexOf(row) + 1] // Hinzufügen der Zeilennummer
+          })
+        )
+      ),
    })
  );
 
@@ -333,24 +336,58 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private createRow() {
-    return this.fb.group({
-      id: [this.state.nextRowId()],
-      typ: ['material', Validators.required],
-      bezeichnung: [''],
-      menge: [1, Validators.min(0)],
-      ek: [0, Validators.min(0)],
-      aufschlag: [0, Validators.min(0)],
-      rabatt: [0, Validators.min(0)],
-      einheit: ['Stk'],
-      mischId: [null],
-      gruppeId: [null],
-      parentMischId: [null],
-      parentGruppeId: [null],
-      collapsed: [false],
-      remark: [''],
-    });
+ private createRow() {
+  const group = this.fb.group({
+    id: [this.state.nextRowId()],
+    typ: ['material', Validators.required],
+    bezeichnung: [''],
+    menge: [1, Validators.min(0)],
+    ek: [0, Validators.min(0)],
+    aufschlag: [0, Validators.min(0)],
+    rabatt: [0, Validators.min(0)],
+    einheit: ['Stk'],
+    mischId: [null],
+    gruppeId: [null],
+    parentMischId: [null],
+    parentGruppeId: [null],
+    collapsed: [false],
+    remark: [''],
+  });
+
+  const fieldsToDisableMisch = ['ek'];
+  const fieldsToDisableGruppe= ['ek', 'aufschlag', 'rabatt', 'menge'];
+const id = group.get('id')?.value;
+  group.get('typ')?.valueChanges.subscribe((typ) => {
+    if (typ === 'misch' ) {
+      fieldsToDisableMisch.forEach(f => group.get(f)?.disable({ emitEvent: false }));
+    }else if(typ === 'gruppe'){
+      fieldsToDisableGruppe.forEach(f => group.get(f)?.disable({ emitEvent: false }));
+      group.get('remark')?.setValue('', { emitEvent: false });
+    this.remarkVisible.delete(Number(id));
+    }else {
+      fieldsToDisableGruppe.forEach(f => group.get(f)?.enable({ emitEvent: false }));
+    }
+   
+    this.cdr.markForCheck();
+  });
+
+  return group;
+}
+
+private remarkVisible = new Set<number>();
+
+toggleRemark(rowId: number) {
+  if (this.remarkVisible.has(rowId)) {
+    this.remarkVisible.delete(rowId);
+  } else {
+    this.remarkVisible.add(rowId);
   }
+  this.cdr.markForCheck();
+}
+
+isRemarkVisible(rowId: number): boolean {
+  return this.remarkVisible.has(rowId);
+}
 
   addGroup() {
     this.groups.push(this.createGroup());
@@ -448,21 +485,19 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
     return rows.controls.filter((ctrl) => ids.has(ctrl.value.id));
   }
 
-  private removeControls(rows: FormArray, ids: Set<number>) {
-    const indices = rows.controls
-      .map((ctrl, index) => (ids.has(ctrl.value.id) ? index : -1))
-      .filter((index) => index >= 0)
-      .sort((a, b) => b - a);
-
-    for (const index of indices) {
-      rows.removeAt(index);
-    }
+private removeControls(rows: FormArray, ids: Set<number>, options = { emitEvent: true }) {
+  const indices = rows.controls
+    .map((ctrl, index) => (ids.has(ctrl.value.id) ? index : -1))
+    .filter((index) => index >= 0)
+    .sort((a, b) => b - a);
+  for (const index of indices) {
+    rows.removeAt(index, options);
   }
+}
 
-  private moveControls(rows: FormArray, controls: AbstractControl[], insertIndex: number) {
-    controls.forEach((control, offset) => rows.insert(insertIndex + offset, control));
-  }
-
+private moveControls(rows: FormArray, controls: AbstractControl[], insertIndex: number, options = { emitEvent: true }) {
+  controls.forEach((control, offset) => rows.insert(insertIndex + offset, control, options));
+}
   getRows(groupIndex: number): FormArray {
     return this.groups.at(groupIndex).get('rows') as FormArray;
   }
@@ -535,32 +570,36 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   calculateRow(control: AbstractControl, group?: AbstractControl): { ep: number; gp: number } {
     const row = control.value;
 
-    if (row.typ === 'gruppe') {
+    /* if (row.typ === 'gruppe') {
       return {
         ep: 0,
         gp: 0,
       };
-    }
+    } */
 
-    if (row.typ === 'misch' && group) {
-      const childRows = this.getChildRowControls(group, control);
-      const totals = childRows.reduce(
-        (acc: { menge: number; gp: number }, child: AbstractControl) => {
-          const childCalc = this.calculateRow(child, group);
-          return {
-            menge: acc.menge + Number(child.value.menge || 0),
-            gp: acc.gp + childCalc.gp,
-          };
-        },
-        { menge: 0, gp: 0 },
-      );
+   if (row.typ === 'misch' && group) {
+  const childRows = this.getChildRowControls(group, control);
+  
 
-      const ep = totals.menge ? totals.gp / totals.menge : 0;
-      return {
-        ep: Number(ep.toFixed(2)),
-        gp: Number(totals.gp.toFixed(2)),
-      };
-    }
+    const totalEp = childRows.reduce((sum: number, child: AbstractControl) => {
+    return sum + this.calculateRow(child, group).ep;
+  }, 0);
+
+    const menge = Number(row.menge || 0);
+    const ek = Number(totalEp)
+    const aufschlag = Number(row.aufschlag || 0);
+    const rabatt = Number(row.rabatt || 0);
+
+    let ep = ek + ek * (aufschlag / 100);
+    ep -= ep * (rabatt / 100);
+
+    return {
+      ep: Number(ep.toFixed(2)),
+      gp: Number((ep * menge).toFixed(2)),
+    };
+
+}
+
 
     const menge = Number(row.menge || 0);
     const ek = Number(row.ek || 0);
@@ -611,7 +650,9 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
   }
 
   onRowDragStart(event: DragEvent, groupId: number, rowId: number) {
+    console.log(event);
     this.draggedRowData = { groupId, rowId, typ: this.getRows(this.findGroupIndexById(groupId)).at(this.findRowIndexById(this.findGroupIndexById(groupId), rowId)).value.typ };
+    console.log("DraggedRowData:", this.draggedRowData);
     event.dataTransfer?.setData('text/plain', 'row');
     event.dataTransfer?.setData('row-id', String(rowId));
     event.dataTransfer?.setData('group-id', String(groupId));
@@ -625,103 +666,129 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
     }
   }
 
-  private insertDragControls(rows: FormArray, controls: AbstractControl[], targetIndex: number) {
-    const insertIndex = targetIndex < 0 ? rows.length : targetIndex;
-    this.moveControls(rows, controls, Math.min(insertIndex, rows.length));
+private insertDragControls(rows: FormArray, controls: AbstractControl[], targetIndex: number, options = { emitEvent: true }) {
+  const insertIndex = targetIndex < 0 ? rows.length : targetIndex;
+  this.moveControls(rows, controls, Math.min(insertIndex, rows.length), options);
+}
+
+ onRowDropToGroup(event: DragEvent, targetGroupId: number) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (!this.draggedRowData) return;
+
+  const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
+  const targetGroupIndex = this.findGroupIndexById(targetGroupId);
+  if (sourceGroupIndex < 0 || targetGroupIndex < 0) return;
+
+  const sourceRows = this.getRows(sourceGroupIndex);
+  const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
+  if (sourceRowIndex < 0) return;
+
+  const sourceRow = sourceRows.at(sourceRowIndex);
+  const targetRows = this.getRows(targetGroupIndex);
+  const NO_EMIT = { emitEvent: false };
+
+  if (this.draggedRowData.typ === 'misch' || this.draggedRowData.typ === 'gruppe') {
+    const block = this.extractRowBlock(sourceRows, sourceRow);
+    this.removeControls(sourceRows, new Set(block.map(ctrl => ctrl.value.id)), NO_EMIT);
+    this.insertDragControls(targetRows, block, targetRows.length, NO_EMIT);
+  } else {
+    sourceRow.get('parentMischId')?.setValue(null, { emitEvent: false });
+    sourceRow.get('parentGruppeId')?.setValue(null, { emitEvent: false });
+    sourceRows.removeAt(sourceRowIndex, NO_EMIT);
+    targetRows.insert(targetRows.length, sourceRow, NO_EMIT);
   }
 
-  onRowDropToGroup(event: DragEvent, targetGroupId: number) {
-    event.preventDefault();
-    if (!this.draggedRowData) {
-      return;
+  this.syncState();
+  this.computeKosten();
+  this.cdr.markForCheck();
+  this.draggedRowData = null;
+}
+
+onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  if (!this.draggedRowData) return;
+
+  const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
+  const targetGroupIndex = this.findGroupIndexById(targetGroupId);
+  if (sourceGroupIndex < 0 || targetGroupIndex < 0) return;
+
+  const sourceRows = this.getRows(sourceGroupIndex);
+  const targetRows = this.getRows(targetGroupIndex);
+  const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
+  const targetRowIndex = this.findRowIndexById(targetGroupIndex, targetRowId);
+  if (sourceRowIndex < 0 || targetRowIndex < 0) return;
+
+  const NO_EMIT = { emitEvent: false };
+  const sourceRow = sourceRows.at(sourceRowIndex);
+
+  if (sourceRow.value.typ === 'misch' || sourceRow.value.typ === 'gruppe') {
+    const block = this.extractRowBlock(sourceRows, sourceRow);
+    const blockIds = new Set<number>(block.map(ctrl => ctrl.value.id));
+
+    this.removeControls(sourceRows, blockIds, NO_EMIT);
+
+    let insertIndex = targetRowIndex;
+    if (sourceGroupIndex === targetGroupIndex && sourceRowIndex < targetRowIndex) {
+      insertIndex -= block.length;
     }
 
-    const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
-    const targetGroupIndex = this.findGroupIndexById(targetGroupId);
-    if (sourceGroupIndex < 0 || targetGroupIndex < 0) {
-      return;
-    }
+    this.insertDragControls(targetRows, block, Math.max(0, insertIndex), NO_EMIT);
 
-    const sourceRows = this.getRows(sourceGroupIndex);
-    const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
-    if (sourceRowIndex < 0) {
-      return;
-    }
+  } else {
+    const targetRowValue = targetRows.at(targetRowIndex).value;
 
-    const sourceRow = sourceRows.at(sourceRowIndex);
-    const targetRows = this.getRows(targetGroupIndex);
-
-    if (this.draggedRowData.typ === 'misch' || this.draggedRowData.typ === 'gruppe') {
-      const block = this.extractRowBlock(sourceRows, sourceRow);
-      this.removeControls(sourceRows, new Set(block.map((ctrl) => ctrl.value.id)));
-      this.insertDragControls(targetRows, block, targetRows.length);
+    // insertIndex VOR removeAt berechnen
+    let insertIndex: number;
+    if (targetRowValue.typ === 'misch' || targetRowValue.typ === 'gruppe') {
+      const targetChildIds = this.collectLinkedRowIds(targetRows, targetRowValue);
+      let lastChildIdx = targetRowIndex;
+      targetRows.controls.forEach((ctrl, idx) => {
+        if (idx > targetRowIndex && targetChildIds.has(ctrl.value.id)) {
+          lastChildIdx = idx;
+        }
+      });
+      insertIndex = lastChildIdx + 1;
     } else {
-      sourceRow.get('parentMischId')?.setValue(null);
-      sourceRow.get('parentGruppeId')?.setValue(null);
-      sourceRows.removeAt(sourceRowIndex);
-      targetRows.insert(targetRows.length, sourceRow);
+      insertIndex = targetRowIndex;
     }
 
-    this.syncState();
-    this.draggedRowData = null;
-  }
+    // Jetzt entfernen
+    sourceRows.removeAt(sourceRowIndex, NO_EMIT);
 
-  onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number) {
-    event.preventDefault();
-    if (!this.draggedRowData) {
-      return;
+    // Index korrigieren wenn gleiche Gruppe und source vor Ziel
+    if (sourceGroupIndex === targetGroupIndex && sourceRowIndex < insertIndex) {
+      insertIndex--;
     }
 
-    const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
-    const targetGroupIndex = this.findGroupIndexById(targetGroupId);
-    if (sourceGroupIndex < 0 || targetGroupIndex < 0) {
-      return;
-    }
-
-    const sourceRows = this.getRows(sourceGroupIndex);
-    const targetRows = this.getRows(targetGroupIndex);
-    const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
-    const targetRowIndex = this.findRowIndexById(targetGroupIndex, targetRowId);
-    if (sourceRowIndex < 0 || targetRowIndex < 0) {
-      return;
-    }
-
-    const sourceRow = sourceRows.at(sourceRowIndex);
-    const targetRow = targetRows.at(targetRowIndex);
-    const targetRowValue = targetRow.value;
-
-    if (this.draggedRowData.typ === 'misch' || this.draggedRowData.typ === 'gruppe') {
-      const block = this.extractRowBlock(sourceRows, sourceRow);
-      this.removeControls(sourceRows, new Set(block.map((ctrl) => ctrl.value.id)));
-      const insertIndex = sourceGroupIndex === targetGroupIndex && sourceRowIndex < targetRowIndex ? targetRowIndex - block.length + 1 : targetRowIndex;
-      this.insertDragControls(targetRows, block, insertIndex);
-    } else if (targetRowValue.typ === 'misch' || targetRowValue.typ === 'gruppe') {
-      sourceRow.get('parentMischId')?.setValue(targetRowValue.typ === 'misch' ? targetRowValue.id : null);
-      sourceRow.get('parentGruppeId')?.setValue(targetRowValue.typ === 'gruppe' ? targetRowValue.id : null);
-      if (sourceGroupIndex === targetGroupIndex) {
-        sourceRows.removeAt(sourceRowIndex);
-      } else {
-        this.getRows(sourceGroupIndex).removeAt(sourceRowIndex);
-      }
-      const insertIndex = targetRowIndex + this.getChildRowControls(this.groups.at(targetGroupIndex), targetRow).length + 1;
-      this.insertDragControls(targetRows, [sourceRow], insertIndex);
+    // Parent-Referenzen setzen
+    if (targetRowValue.typ === 'misch') {
+      sourceRow.get('parentMischId')?.setValue(targetRowValue.id, { emitEvent: false });
+      sourceRow.get('parentGruppeId')?.setValue(null, { emitEvent: false });
+    } else if (targetRowValue.typ === 'gruppe') {
+      sourceRow.get('parentMischId')?.setValue(null, { emitEvent: false });
+      sourceRow.get('parentGruppeId')?.setValue(targetRowValue.id, { emitEvent: false });
     } else {
-      sourceRow.get('parentMischId')?.setValue(null);
-      sourceRow.get('parentGruppeId')?.setValue(null);
-      if (sourceGroupIndex === targetGroupIndex) {
-        const existing = this.extractRowBlock(sourceRows, sourceRow);
-        this.removeControls(sourceRows, new Set(existing.map((ctrl) => ctrl.value.id)));
-        const insertIndex = sourceRowIndex < targetRowIndex ? targetRowIndex - existing.length + 1 : targetRowIndex;
-        this.insertDragControls(targetRows, [sourceRow], insertIndex);
-      } else {
-        this.getRows(sourceGroupIndex).removeAt(sourceRowIndex);
-        this.insertDragControls(targetRows, [sourceRow], targetRowIndex);
-      }
+      sourceRow.get('parentMischId')?.setValue(null, { emitEvent: false });
+      sourceRow.get('parentGruppeId')?.setValue(null, { emitEvent: false });
     }
 
-    this.syncState();
-    this.draggedRowData = null;
+    targetRows.insert(Math.max(0, insertIndex), sourceRow, NO_EMIT);
   }
+
+  this.syncState();
+  this.computeKosten();
+  this.cdr.markForCheck();
+  this.draggedRowData = null;
+}
+// Hilfsfunktion zur Aktualisierung der Parent-Referenzen
+updateParentReferences(row: any, mischId: number | null, gruppeId: number | null) {
+    row.get('parentMischId')?.setValue(mischId);
+    row.get('parentGruppeId')?.setValue(gruppeId);
+}
 
   getGrandTotal() {
     return this.groups.controls.reduce((sum, _, index) => {

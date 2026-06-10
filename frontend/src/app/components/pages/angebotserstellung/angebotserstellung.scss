@@ -21,16 +21,13 @@
   font-weight: 600;
 }
 
-.dragicon{
+
+td img {
   width: 24px;
   height: 24px;
   opacity: 0.5;
 }
-.dragicon img{
-  width: 100%;
-  height: 100%;
-}
-.dragicon:hover{
+td img:hover{
   cursor:grab;
   opacity: 1.0;
 }
@@ -128,7 +125,7 @@ textarea:focus {
 }
 
 .row-child td {
-  padding-left: 32px;
+  
   background: #fcfdff;
 }
 
