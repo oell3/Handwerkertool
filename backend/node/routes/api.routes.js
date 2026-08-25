@@ -7,6 +7,7 @@ import objekteRoute from './objekte/objekte.router.js'
 import kundeRoute from './kunde/kunde.router.js'
 import ansprechpartnerRoute from './ansprechpartner/ansprechpartner.router.js'
 import projekteRouter from './projekte/projekte.router.js'
+import offerRouter from './offer/offer.router.js'
 
 const router = express.Router();
 
@@ -22,4 +23,5 @@ router.use('/ansprechpartner', ansprechpartnerRoute)
 
 router.use('/projekte', projekteRouter)
 
+router.use('/offer', offerRouter)
 export default router;

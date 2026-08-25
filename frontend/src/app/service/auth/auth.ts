@@ -9,8 +9,8 @@ export class AuthService {
   private http = inject(HttpClient);
 
   checkAuth() {
-    return this.http.get('http://localhost:8080/auth/status', {
-      withCredentials: true,
+    return this.http.get('https://localhost:7036/api/auth/status', {
+      withCredentials: true
     });
   }
 
@@ -24,7 +24,7 @@ export class AuthService {
 
   login(email: string, password: string) {
     return this.http.post(
-      'http://localhost:8080/login',
+      'https://localhost:7036/api/user/login',
       {
         email,
         password,
@@ -37,7 +37,7 @@ export class AuthService {
 
   refresh() {
     return this.http.post(
-      'http://localhost:8080/refresh',
+      'https://localhost:7036/api/user/refresh',
       {},
       {
         withCredentials: true,
@@ -48,7 +48,7 @@ export class AuthService {
   logout() {
     this.loggedIn = false;
     return this.http.post(
-      'http://localhost:8080/logout',
+      'https://localhost:7036/api/user/logout',
       {},
       {
         withCredentials: true,

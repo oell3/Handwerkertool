@@ -15,18 +15,20 @@ router.get('/:kundenid', async (req, res) => {
 router.get('/:kundenid/:objektid',  async (req, res) => {
   const mandantId = req.user.mandantid
   
-  const data = await getallProjektebyObjekt(req.params.objektid, mandantId);
+  const data = await getallProjektebyObjekt(req.params.objektid, mandantId );
 
   res.json(data)
 })
 
 router.get('/', async (req, res) => {
    const mandantId = req.user.mandantid
+   
   
 
   const data = await getallProjekte(mandantId);
 
   res.json(data)
 });
+
 
 export default router;

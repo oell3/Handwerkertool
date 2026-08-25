@@ -1,37 +1,19 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef,Component, OnInit, AfterViewInit, inject } from '@angular/core';
 import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
+  ChangeDetectionStrategy, ChangeDetectorRef, Component,
+  OnInit, AfterViewInit, inject,
+} from '@angular/core';
+import {
+  AbstractControl, FormArray, FormBuilder,
+  FormGroup, ReactiveFormsModule,
 } from '@angular/forms';
 
-import { signal } from '@angular/core';
-import { AngebotService } from './service/angebot.service';
-import { CalculatorService } from './service/calculator';
-import { StateService } from './service/state';
-interface Kunde {
-  id: string;
-  ID?: string | number;
-  typ?: string;
-  name?: string;
-  Name?: string;
-  adresse?: string;
-  plz?: string;
-  stadt?: string;
-  mail?: string;
-  telefon?: string;
-  fax?: string;
-  steuernummer?: string;
-  iban?: string;
-  steueridentifikationsnummer?: string;
-  lat?: string;
-  lon?: string;
-  mandant_id?: string;
-}
+import { AngebotService }    from './services/angebot.service';
+import { CalculatorService } from './services/calculator';
+import { StateService }      from './services/state';
+import { DataLoaderService } from './services/data-loader.service';
+import { DraggedRowData }    from './angebotserstellung.types';
+import { createRowGroup, createGroupGroup } from './helpers/form-factory';
 
 @Component({
   selector: 'app-angebotserstellung',
@@ -41,40 +23,48 @@ interface Kunde {
   templateUrl: './angebotserstellung.html',
   styleUrls: ['./angebotserstellung.scss'],
 })
-
-
 export class AngebotserstellungComponent implements OnInit, AfterViewInit {
-  private readonly fb = inject(FormBuilder);
-  private readonly state = inject(StateService);
-  private readonly calculator = inject(CalculatorService);
+  private readonly fb             = inject(FormBuilder);
+  private readonly state          = inject(StateService);
+  private readonly calculator     = inject(CalculatorService);
   private readonly angebotService = inject(AngebotService);
-  kunden = signal<Kunde[]>([]);
-  ansprechpartner = signal<any[]>([]);
-  objekte = signal<any[]>([]);
-  projekte = signal<any[]>([]);
-  vorlagenschluss = signal<any[]>([]);
-  vorlageneinleitung = signal<any[]>([]);
-  private allObjekte: Array<any> = [];
-  private allProjekte: Array<any> = [];
-  private allAnsprechpartner: Array<any> = [];
+  private readonly cdr            = inject(ChangeDetectorRef);
+  readonly loader                 = inject(DataLoaderService);
 
-
-  private readonly cdr = inject(ChangeDetectorRef);
-
-  private draggedRowData: { groupId: number; rowId: number; typ: string } | null = null;
-  private draggedGroupId: number | null = null;
-
-  private einleitungQuill: any = null;
-  private schlussQuill: any = null;
+  // Signals direkt vom Service exponieren
+  get kunden()             { return this.loader.kunden; }
+  get ansprechpartner()    { return this.loader.ansprechpartner; }
+  get objekte()            { return this.loader.objekte; }
+  get projekte()           { return this.loader.projekte; }
+  get vorlageneinleitung() { return this.loader.vorlageneinleitung; }
+  get vorlagenschluss()    { return this.loader.vorlagenschluss; }
 
   form!: FormGroup;
+  remarkVisible = new Set<number>();
+
+  // Drag-State
+  private draggedRowData: DraggedRowData | null = null;
+  private draggedGroupId: number | null = null;
+  dragOverGroupId: number | null = null;
+  dragOverRowId:   number | null = null;
+
+  // Kosten-Summen
+  materialKosten  = 0;
+  lohnKosten      = 0;
+  sonstigeKosten  = 0;
+
+  private einleitungQuill: any = null;
+  private schlussQuill: any    = null;
+
   typeOptions = [
-    { value: 'material', label: 'Material' },
-    { value: 'lohn', label: 'Lohn' },
-    { value: 'sonstiges', label: 'Sonstiges' },
-    { value: 'misch', label: 'Mischposition' },
-    { value: 'gruppe', label: 'Gruppe' },
+    { value: 'material',   label: 'Material' },
+    { value: 'lohn',       label: 'Lohn' },
+    { value: 'sonstiges',  label: 'Sonstiges' },
+    { value: 'misch',      label: 'Mischposition' },
+    { value: 'gruppe',     label: 'Gruppe' },
   ];
+
+  // ─── Lifecycle ───────────────────────────────────────────────
 
   ngOnInit(): void {
     this.buildForm();
@@ -84,16 +74,17 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
       this.computeKosten();
     });
 
-    if (this.groups.length === 0) {
-      this.addGroup();
-    }
+    if (this.groups.length === 0) this.addGroup();
 
     this.setupVorlagenListeners();
-    this.loadInitialData();
+    this.loader.loadAll();
 
-    // react to customer selection to filter dependent lists
-    this.form.get('kundenId')?.valueChanges.subscribe((kid) => {
-      this.onKundeChange(kid);
+    this.form.get('kundenId')?.valueChanges.subscribe((id) => {
+      this.form.patchValue(
+        { objektId: null, projektId: null, ansprechpartnerId: null },
+        { emitEvent: false }
+      );
+      this.loader.filterByKunde(id);
     });
   }
 
@@ -101,403 +92,12 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
     this.initQuillEditors();
   }
 
-  private setupVorlagenListeners() {
-    this.form
-      .get('vorlageEinleitungId')
-      ?.valueChanges.subscribe((id) => this.applyVorlageEinleitung(id));
-    this.form.get('vorlageSchlussId')?.valueChanges.subscribe((id) => this.applyVorlageSchluss(id));
-  }
-
-  private applyVorlageEinleitung(vorlageId: any) {
-    const vorlage = this.vorlageneinleitung().find((v: any) => v.id === vorlageId || v.ID === vorlageId);
-    const value = vorlage?.text || vorlage?.content || '';
-    this.form.patchValue({ einleitung: value }, { emitEvent: false });
-    if (this.einleitungQuill) {
-      this.einleitungQuill.root.innerHTML = value;
-    }
-  }
-
-  private applyVorlageSchluss(vorlageId: any) {
-    const vorlage = this.vorlagenschluss().find((v: any) => v.id === vorlageId || v.ID === vorlageId);
-    const value = vorlage?.text || vorlage?.content || '';
-    this.form.patchValue({ schluss: value }, { emitEvent: false });
-    if (this.schlussQuill) {
-      this.schlussQuill.root.innerHTML = value;
-    }
-  }
-
-  private async loadInitialData() {
-    await Promise.all([
-      this.loadKunden(),
-      this.loadVorlagen(),
-      this.loadObjekte(),
-      this.loadProjekte(),
-      this.loadAnsprechpartner(),
-    ]);
-  }
-
-  private async loadKunden() {
-
-    try {
-      const res = await fetch('/api/kunden');
-      const data = await res.json();
-      if (res.ok) {
-        const normalized = data.map((K: any) => ({
-          ...K,
-          id: String(K.id ?? K.ID ?? ''),
-          name: K.name ?? K.Name ?? '',
-        }));
-        this.kunden.set(normalized);
-      }
-    } catch (e) {
-      console.warn('kunden load failed', e);
-    }
-    console.log('Kunden:', this.kunden());
-  }
-
-  private async loadVorlagen() {
-    try {
-      const res = await fetch('/api/vorlagen');
-      const data = await res.json();
-      if (res.ok){
-        this.vorlageneinleitung.set([...data.einleitung])
-        this.vorlagenschluss.set([...data.schluss]);
-    
-      } 
-    } catch (e) {
-      console.warn('vorlagen load failed', e);
-    }
-    console.log('vorlagen:', this.vorlageneinleitung(), this.vorlagenschluss());
-  }
-
-  private async loadObjekte() {
-    try {
-      const res = await fetch('/api/objekte');
-      if (res.ok) {
-        const data = await res.json();
-
-        this.allObjekte = [...data.objekte];
-        this.objekte.set([...this.allObjekte]);
-      }
-    } catch (e) {
-      console.warn('objekte load failed', e);
-    }
-  }
-
-  private async loadProjekte() {
-    try {
-      const res = await fetch('/api/projekte');
-      if (res.ok) {
-        this.allProjekte = await res.json();
-        this.projekte.set([...this.allProjekte]);
-      }
-    } catch (e) {
-      console.warn('projekte load failed', e);
-    }
-  }
-
-  private async loadAnsprechpartner() {
-    try {
-      const res = await fetch('/api/ansprechpartner');
-      if (res.ok) {
-        this.allAnsprechpartner = await res.json();
-        this.ansprechpartner.set([...this.allAnsprechpartner]);
-      }
-    } catch (e) {
-      console.warn('ansprechpartner load failed', e);
-    }
-  }
-
-  private onKundeChange(kundenId: any) {
-    this.form.patchValue(
-      { objektId: null, projektId: null, ansprechpartnerId: null },
-      { emitEvent: false },
-    );
-    if (kundenId) {
-      const normalized = String(kundenId);
-      this.objekte.set(
-        this.allObjekte.filter(
-          (o) => String(o.kunden_id) === normalized,
-        ),
-      );
-      this.projekte.set(
-        this.allProjekte.filter(
-          (p) => String( p.kunden_id) === normalized,
-        ),
-      );
-      this.ansprechpartner.set(
-        this.allAnsprechpartner.filter(
-          (a) => String( a.kunden_id) === normalized,
-        ),
-      );
-    } else {
-      this.objekte.set([...this.allObjekte]);
-      this.projekte.set([...this.allProjekte]);
-      this.ansprechpartner.set([...this.allAnsprechpartner]);
-    }
-  }
-
-  private initQuillEditors() {
-    const ein = document.getElementById('einleitungEditor');
-    const sch = document.getElementById('schlussEditor');
-
-    const init = (QuillCtor: any) => {
-      if (ein) {
-        this.einleitungQuill = new QuillCtor(ein, { theme: 'snow' });
-        this.einleitungQuill.on('text-change', () => {
-          const html = ein.querySelector('.ql-editor')?.innerHTML || '';
-          this.form.patchValue({ einleitung: html }, { emitEvent: false });
-        });
-        const initialEin = this.form.value.einleitung || '';
-        this.einleitungQuill.root.innerHTML = initialEin;
-      }
-
-      if (sch) {
-        this.schlussQuill = new QuillCtor(sch, { theme: 'snow' });
-        this.schlussQuill.on('text-change', () => {
-          const html = sch.querySelector('.ql-editor')?.innerHTML || '';
-          this.form.patchValue({ schluss: html }, { emitEvent: false });
-        });
-        const initialSch = this.form.value.schluss || '';
-        this.schlussQuill.root.innerHTML = initialSch;
-      }
-    };
-
-    if (typeof (window as any).Quill !== 'undefined') {
-      init((window as any).Quill);
-      return;
-    }
-
-    // try dynamic import from node_modules
-    import('quill')
-      .then((m) => init((m as any).default || m))
-      .catch((err) => {
-        // quill not available; editors remain as plain divs
-        console.warn('Quill not available', err);
-      });
-  }
+  // ─── Form ────────────────────────────────────────────────────
 
   get groups(): FormArray {
     return this.form.get('groups') as FormArray;
   }
 
-    private buildForm() {
-      const groups = this.state.value.angebot.groups.map((group) =>
-        this.fb.group({
-          id: [group.id],
-          name: [group.name || `Leistungsgruppe ${group.id}`, Validators.required],
-          collapsed: [group.collapsed ?? false],
-          rows: this.fb.array(
-            group.rows.map((row) =>
-              this.fb.group({
-                id: [row.id],
-                typ: [row.typ || 'material', Validators.required],
-                bezeichnung: [row.bezeichnung || ''],
-                menge: [row.menge ?? 1, Validators.min(0)],
-                ek: [row.ek ?? 0, Validators.min(0)],
-                aufschlag: [row.aufschlag ?? 0, Validators.min(0)],
-                rabatt: [row.rabatt ?? 0, Validators.min(0)],
-                einheit: [row.einheit || 'Stk'],
-            mischId: [row.mischId ?? null],
-            gruppeId: [row.gruppeId ?? null],
-            parentMischId: [row.parentMischId ?? null],
-            parentGruppeId: [row.parentGruppeId ?? null],
-            collapsed: [row.collapsed ?? false],
-            remark: [row.remark || ''],
-            rowNumber: [group.rows.indexOf(row) + 1] // Hinzufügen der Zeilennummer
-          })
-        )
-      ),
-   })
- );
-
-
-    this.form = this.fb.group({
-      title: [this.state.value.angebot.title || ''],
-      einleitung: [this.state.value.angebot.einleitung || ''],
-      schluss: [this.state.value.angebot.schluss || ''],
-      kundenId: [this.state.value.angebot.kundenId || null],
-      objektId: [(this.state.value.angebot as any).objektId || null],
-      projektId: [(this.state.value.angebot as any).projektId || null],
-      ansprechpartnerId: [(this.state.value.angebot as any).ansprechpartnerId || null],
-      vorlageEinleitungId: [(this.state.value.angebot as any).vorlageEinleitungId || null],
-      vorlageSchlussId: [(this.state.value.angebot as any).vorlageSchlussId || null],
-      groups: this.fb.array(groups),
-    });
-  }
-
-  private createGroup() {
-    const id = this.state.nextGroupId();
-    return this.fb.group({
-      id: [id],
-      name: [`Leistungsgruppe ${id}`, Validators.required],
-      collapsed: [false],
-      rows: this.fb.array([this.createRow()]),
-    });
-  }
-
- private createRow() {
-  const group = this.fb.group({
-    id: [this.state.nextRowId()],
-    typ: ['material', Validators.required],
-    bezeichnung: [''],
-    menge: [1, Validators.min(0)],
-    ek: [0, Validators.min(0)],
-    aufschlag: [0, Validators.min(0)],
-    rabatt: [0, Validators.min(0)],
-    einheit: ['Stk'],
-    mischId: [null],
-    gruppeId: [null],
-    parentMischId: [null],
-    parentGruppeId: [null],
-    collapsed: [false],
-    remark: [''],
-  });
-
-  const fieldsToDisableMisch = ['ek'];
-  const fieldsToDisableGruppe= ['ek', 'aufschlag', 'rabatt', 'menge'];
-const id = group.get('id')?.value;
-  group.get('typ')?.valueChanges.subscribe((typ) => {
-    if (typ === 'misch' ) {
-      fieldsToDisableMisch.forEach(f => group.get(f)?.disable({ emitEvent: false }));
-    }else if(typ === 'gruppe'){
-      fieldsToDisableGruppe.forEach(f => group.get(f)?.disable({ emitEvent: false }));
-      group.get('remark')?.setValue('', { emitEvent: false });
-    this.remarkVisible.delete(Number(id));
-    }else {
-      fieldsToDisableGruppe.forEach(f => group.get(f)?.enable({ emitEvent: false }));
-    }
-   
-    this.cdr.markForCheck();
-  });
-
-  return group;
-}
-
-private remarkVisible = new Set<number>();
-
-toggleRemark(rowId: number) {
-  if (this.remarkVisible.has(rowId)) {
-    this.remarkVisible.delete(rowId);
-  } else {
-    this.remarkVisible.add(rowId);
-  }
-  this.cdr.markForCheck();
-}
-
-isRemarkVisible(rowId: number): boolean {
-  return this.remarkVisible.has(rowId);
-}
-
-  addGroup() {
-    this.groups.push(this.createGroup());
-    this.syncState();
-  }
-
-  removeGroup(index: number) {
-    this.groups.removeAt(index);
-    this.syncState();
-  }
-
-  toggleGroup(index: number) {
-    console.log("gruppe zu oder aufmachen", index);
-    const group = this.groups.at(index);
-    group.get('collapsed')?.setValue(!group.get('collapsed')?.value);
-    this.syncState();
-  }
-
-  toggleRowCollapse(groupId: number, rowId: number) {
-    const groupIndex = this.findGroupIndexById(groupId);
-    const rowIndex = this.findRowIndexById(groupIndex, rowId);
-    if (groupIndex < 0 || rowIndex < 0) {
-      return;
-    }
-    const row = this.getRows(groupIndex).at(rowIndex);
-    row.get('collapsed')?.setValue(!row.get('collapsed')?.value);
-    this.syncState();
-  }
-
-  removeRowFromGroupById(groupId: number, rowId: number) {
-    const groupIndex = this.findGroupIndexById(groupId);
-    const rowIndex = this.findRowIndexById(groupIndex, rowId);
-    if (groupIndex < 0 || rowIndex < 0) {
-      return;
-    }
-    this.removeRow(groupIndex, rowIndex);
-  }
-
-  onRowDragEnd() {
-    this.draggedRowData = null;
-  }
-
-  isMixChild(row: any) {
-    return row?.parentMischId != null;
-  }
-
-  isGroupChild(row: any) {
-    return row?.parentGruppeId != null;
-  }
-
-  isChildRow(row: any) {
-    return this.isMixChild(row) || this.isGroupChild(row);
-  }
-
-  private findGroupIndexById(groupId: number) {
-    return this.groups.controls.findIndex((g) => g.value.id === groupId);
-  }
-
-  private findRowIndexById(groupIndex: number, rowId: number) {
-    return this.getRows(groupIndex).controls.findIndex((r) => r.value.id === rowId);
-  }
-
-  getChildRowControls(group: AbstractControl, parentRow: AbstractControl): FormGroup[] {
-    const rows = group.get('rows') as FormArray;
-    return rows.controls.filter(
-      (child) =>
-        child.value.parentMischId === parentRow.value.id || child.value.parentGruppeId === parentRow.value.id,
-    ) as FormGroup[];
-  }
-
-  private collectLinkedRowIds(rows: FormArray, rootRow: any) {
-    const ids = new Set<number>([rootRow.id]);
-    let added = true;
-
-    while (added) {
-      added = false;
-      rows.controls.forEach((ctrl) => {
-        const row = ctrl.value;
-        if (
-          !ids.has(row.id) &&
-          ((row.parentMischId != null && ids.has(row.parentMischId)) ||
-            (row.parentGruppeId != null && ids.has(row.parentGruppeId)))
-        ) {
-          ids.add(row.id);
-          added = true;
-        }
-      });
-    }
-
-    return ids;
-  }
-
-  private extractRowBlock(rows: FormArray, rootRow: AbstractControl) {
-    const ids = this.collectLinkedRowIds(rows, rootRow.value);
-    return rows.controls.filter((ctrl) => ids.has(ctrl.value.id));
-  }
-
-private removeControls(rows: FormArray, ids: Set<number>, options = { emitEvent: true }) {
-  const indices = rows.controls
-    .map((ctrl, index) => (ids.has(ctrl.value.id) ? index : -1))
-    .filter((index) => index >= 0)
-    .sort((a, b) => b - a);
-  for (const index of indices) {
-    rows.removeAt(index, options);
-  }
-}
-
-private moveControls(rows: FormArray, controls: AbstractControl[], insertIndex: number, options = { emitEvent: true }) {
-  controls.forEach((control, offset) => rows.insert(insertIndex + offset, control, options));
-}
   getRows(groupIndex: number): FormArray {
     return this.groups.at(groupIndex).get('rows') as FormArray;
   }
@@ -506,291 +106,351 @@ private moveControls(rows: FormArray, controls: AbstractControl[], insertIndex: 
     return group.get('rows') as FormArray;
   }
 
-  addRow(groupIndex: number) {
-    this.getRows(groupIndex).push(this.createRow());
+  private buildForm(): void {
+    const groups = this.state.value.angebot.groups.map((group) =>
+      this.fb.group({
+        sortierung:        [group.sortierung],
+        name:      [group.name || `Leistungsgruppe ${group.sortierung}`],
+        collapsed: [group.collapsed ?? false],
+        rows: this.fb.array(
+          group.rows.map((row) =>
+            createRowGroup(this.fb, this.state, this.cdr, this.remarkVisible, row)
+          )
+        ),
+      })
+    );
+
+    this.form = this.fb.group({
+      title:               [this.state.value.angebot.title || ''],
+      einleitung:          [this.state.value.angebot.einleitung || ''],
+      schluss:             [this.state.value.angebot.schluss || ''],
+      kundenId:            [(this.state.value.angebot as any).kundenId || null],
+      objektId:            [(this.state.value.angebot as any).objektId || null],
+      projektId:           [(this.state.value.angebot as any).projektId || null],
+      ansprechpartnerId:   [(this.state.value.angebot as any).ansprechpartnerId || null],
+      vorlageEinleitungId: [(this.state.value.angebot as any).vorlageEinleitungId || null],
+      vorlageSchlussId:    [(this.state.value.angebot as any).vorlageSchlussId || null],
+      groups: this.fb.array(groups),
+    });
+  }
+
+  private createRow(overrides: Partial<any> = {}): FormGroup {
+    return createRowGroup(this.fb, this.state, this.cdr, this.remarkVisible, overrides);
+  }
+
+  private createGroup(): FormGroup {
+    return createGroupGroup(this.fb, this.state, this.cdr, this.remarkVisible);
+  }
+
+  // ─── Group-Operationen ───────────────────────────────────────
+
+  addGroup(): void                   { this.groups.push(this.createGroup()); this.syncState(); }
+  removeGroup(i: number): void        { this.groups.removeAt(i); this.syncState(); }
+  toggleGroup(i: number): void        {
+    const g = this.groups.at(i);
+    const collapsed = g.get('collapsed');
+collapsed?.setValue(!collapsed.value);
     this.syncState();
   }
 
-  addRowFromGroup(group: AbstractControl) {
-    this.getRowsFromGroup(group).push(this.createRow());
+  // ─── Row-Operationen ─────────────────────────────────────────
+
+  addRow(groupIndex: number): void                       { this.getRows(groupIndex).push(this.createRow()); this.syncState(); }
+  addRowFromGroup(group: AbstractControl): void           { this.getRowsFromGroup(group).push(this.createRow()); this.syncState(); }
+  toggleRemark(rowId: number): void                      {
+    this.remarkVisible.has(rowId) ? this.remarkVisible.delete(rowId) : this.remarkVisible.add(rowId);
+    this.cdr.markForCheck();
+  }
+  isRemarkVisible(rowId: number):  boolean           { return this.remarkVisible.has(rowId); }
+  isMixChild(row: any):            boolean           { return row?.parentMischId != null; }
+  isGroupChild(row: any):          boolean           { return row?.parentGruppeId != null; }
+  isChildRow(row: any):            boolean           { return this.isMixChild(row) || this.isGroupChild(row); }
+  isDragOver(gId: number, rId: number): boolean      { return this.dragOverGroupId === gId && this.dragOverRowId === rId; }
+
+  toggleRowCollapse(groupId: number, rowId: number): void {
+    const gi = this.findGroupIndexById(groupId);
+    const ri = this.findRowIndexById(gi, rowId);
+    if (gi < 0 || ri < 0) return;
+    const row = this.getRows(gi).at(ri);
+    row.get('collapsed')?.setValue(!row.get('collapsed')?.value);
     this.syncState();
   }
 
-  removeRow(groupIndex: number, rowIndex: number) {
+  removeRow(groupIndex: number, rowIndex: number): void {
     const rows = this.getRows(groupIndex);
-    const row = rows.at(rowIndex).value;
-
+    const row  = rows.at(rowIndex).value;
     if (row.typ === 'misch' || row.typ === 'gruppe') {
-      const ids = this.collectLinkedRowIds(rows, row);
-      this.removeControls(rows, ids);
+      this.removeControls(rows, this.collectLinkedRowIds(rows, row));
     } else {
       rows.removeAt(rowIndex);
     }
-
     this.syncState();
   }
 
-  removeRowFromGroup(group: AbstractControl, rowIndex: number) {
-    const rows = this.getRowsFromGroup(group);
-    const row = rows.at(rowIndex).value;
+  removeRowFromGroupById(groupId: number, rowId: number): void {
+    const gi = this.findGroupIndexById(groupId);
+    const ri = this.findRowIndexById(gi, rowId);
+    if (gi < 0 || ri < 0) return;
+    this.removeRow(gi, ri);
+  }
 
+  removeRowFromGroup(group: AbstractControl, rowIndex: number): void {
+    const rows = this.getRowsFromGroup(group);
+    const row  = rows.at(rowIndex).value;
     if (row.typ === 'misch' || row.typ === 'gruppe') {
-      const ids = this.collectLinkedRowIds(rows, row);
-      this.removeControls(rows, ids);
+      this.removeControls(rows, this.collectLinkedRowIds(rows, row));
     } else {
       rows.removeAt(rowIndex);
     }
-
     this.syncState();
   }
 
-  getGroupTotal(groupIndex: number) {
-    return this.getRows(groupIndex).controls.reduce((sum, control) => {
-      const row = control.value;
-      if (row.parentMischId != null) {
-        return sum;
-      }
-      const { gp } = this.calculateRow(control, this.groups.at(groupIndex));
-      return sum + gp;
+  getChildRowControls(group: AbstractControl, parentRow: AbstractControl): FormGroup[] {
+    return (group.get('rows') as FormArray).controls.filter(
+      (c) => c.value.parentMischId === parentRow.value.id || c.value.parentGruppeId === parentRow.value.id,
+    ) as FormGroup[];
+  }
+
+  // ─── Berechnungen ────────────────────────────────────────────
+
+  calculateRow(control: AbstractControl, group?: AbstractControl): { ep: number; gp: number } {
+    const row = control.value;
+    if (row.typ === 'misch' && group) {
+      const totalGp = this.getChildRowControls(group, control)
+        .reduce((sum, child) => sum + this.calculateChildRow(child, control).gp, 0);
+      const mischMenge = Number(row.menge || 0);
+      return { ep: Number((mischMenge ? totalGp / mischMenge : 0).toFixed(2)), gp: Number(totalGp.toFixed(2)) };
+    }
+    const menge = Number(row.menge || 0);
+    const ek    = Number(row.ek    || 0);
+    let ep = ek + ek * (Number(row.aufschlag || 0) / 100);
+    ep    -= ep * (Number(row.rabatt    || 0) / 100);
+    return { ep: Number(ep.toFixed(2)), gp: Number((ep * menge).toFixed(2)) };
+  }
+
+  calculateChildRow(childCtrl: AbstractControl, parentCtrl: AbstractControl): { ep: number; gp: number } {
+    const child      = childCtrl.value;
+    const mischMenge = Number(parentCtrl.value.menge || 0);
+    const menge      = Number(child.menge     || 0);
+    const ek         = Number(child.ek        || 0);
+    let ep = ek + ek * (Number(child.aufschlag || 0) / 100);
+    ep    -= ep * (Number(child.rabatt         || 0) / 100);
+    return { ep: Number(ep.toFixed(2)), gp: Number((ep * menge * mischMenge).toFixed(2)) };
+  }
+
+  getGroupTotal(groupIndex: number): number {
+    return this.getRows(groupIndex).controls.reduce((sum, ctrl) => {
+      if (ctrl.value.parentMischId != null) return sum;
+      return sum + this.calculateRow(ctrl, this.groups.at(groupIndex)).gp;
     }, 0);
   }
 
-  getGroupTotalFromGroup(group: AbstractControl) {
-    const rows = this.getRowsFromGroup(group);
-    return rows.controls.reduce((sum, control) => {
-      const row = control.value;
-      if (row.parentMischId != null) {
-        return sum;
-      }
-      const { gp } = this.calculateRow(control, group);
-      return sum + gp;
+  getGroupTotalFromGroup(group: AbstractControl): number {
+    return this.getRowsFromGroup(group).controls.reduce((sum, ctrl) => {
+      if (ctrl.value.parentMischId != null) return sum;
+      return sum + this.calculateRow(ctrl, group).gp;
     }, 0);
+  }
+
+  getGrandTotal(): number {
+    return this.groups.controls.reduce((sum, _, i) => sum + this.getGroupTotal(i), 0);
   }
 
   getRowDisplayNumber(group: AbstractControl, rowId: number): number {
-  const rows = this.getRowsFromGroup(group);
-  let counter = 0;
-  for (const ctrl of rows.controls) {
-    const val = ctrl.value;
-    if (val.typ === 'gruppe') continue;
-    counter++;
-    if (val.id === rowId) return counter;
-  }
-  return counter;
-}
-
-  calculateRow(control: AbstractControl, group?: AbstractControl): { ep: number; gp: number } {
-  const row = control.value;
-
-  if (row.typ === 'misch' && group) {
-    const childRows = this.getChildRowControls(group, control);
-    const totalGp = childRows.reduce((sum: number, child: AbstractControl) => {
-      return sum + this.calculateChildRow(child, control).gp;
-    }, 0);
-
-    const mischMenge = Number(row.menge || 0);
-    const ep = mischMenge ? totalGp / mischMenge : 0;
-
-    return {
-      ep: Number(ep.toFixed(2)),
-      gp: Number(totalGp.toFixed(2)),
-    };
+    let counter = 0;
+    for (const ctrl of this.getRowsFromGroup(group).controls) {
+      if (ctrl.value.typ === 'gruppe') continue;
+      counter++;
+      if (ctrl.value.id === rowId) return counter;
+    }
+    return counter;
   }
 
-  const menge = Number(row.menge || 0);
-  const ek = Number(row.ek || 0);
-  const aufschlag = Number(row.aufschlag || 0);
-  const rabatt = Number(row.rabatt || 0);
+  computeKosten(): void {
+    let material = 0, lohn = 0, sonstiges = 0;
 
-  let ep = ek + ek * (aufschlag / 100);
-  ep -= ep * (rabatt / 100);
+    this.groups.controls.forEach((groupCtrl) => {
+      (groupCtrl.get('rows') as FormArray).controls.forEach((r) => {
+        const val = r.value;
+        if (val.typ === 'misch') {
+          const mischMenge = Number(val.menge || 0);
+          (groupCtrl.get('rows') as FormArray).controls
+            .filter(c => c.value.parentMischId === val.id)
+            .forEach((child) => {
+              const kosten = mischMenge * Number(child.value.menge || 0) * Number(child.value.ek || 0);
+              if (child.value.typ === 'material')  material  += kosten;
+              else if (child.value.typ === 'lohn') lohn      += kosten;
+              else                                 sonstiges += kosten;
+            });
+        } else if (val.parentMischId == null && val.parentGruppeId == null && val.typ !== 'gruppe') {
+          const kosten = Number(val.menge || 0) * Number(val.ek || 0);
+          if (val.typ === 'material')  material  += kosten;
+          else if (val.typ === 'lohn') lohn      += kosten;
+          else if (val.typ === 'sonstiges') sonstiges += kosten;
+        }
+      });
+    });
 
-  return {
-    ep: Number(ep.toFixed(2)),
-    gp: Number((ep * menge).toFixed(2)),
-  };
-}
+    this.materialKosten  = material;
+    this.lohnKosten      = lohn;
+    this.sonstigeKosten  = sonstiges;
+  }
 
-  calculateChildRow(
-  childControl: AbstractControl,
-  parentControl: AbstractControl
-): { ep: number; gp: number } {
-  const child = childControl.value;
-  const mischMenge = Number(parentControl.value.menge || 0);
+  // ─── Drag & Drop ─────────────────────────────────────────────
 
-  const menge = Number(child.menge || 0);
-  const ek = Number(child.ek || 0);
-  const aufschlag = Number(child.aufschlag || 0);
-  const rabatt = Number(child.rabatt || 0);
-
-  let ep = ek + ek * (aufschlag / 100);
-  ep -= ep * (rabatt / 100);
-
-  return {
-    ep: Number(ep.toFixed(2)),
-    gp: Number((ep * menge * mischMenge).toFixed(2)),
-  };
-}
-
-  onGroupDragStart(event: DragEvent, groupId: number) {
+  onGroupDragStart(event: DragEvent, groupId: number): void {
     this.draggedGroupId = groupId;
     event.dataTransfer?.setData('text/plain', 'group');
-    event.dataTransfer?.setData('group-id', String(groupId));
     event.dataTransfer!.effectAllowed = 'move';
   }
 
-  onGroupDragOver(event: DragEvent) {
+  onGroupDragOver(event: DragEvent): void {
     event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
   }
 
-  onGroupDrop(event: DragEvent, targetGroupId: number) {
+  onGroupDrop(event: DragEvent, targetGroupId: number): void {
     event.preventDefault();
-    if (this.draggedGroupId == null || this.draggedGroupId === targetGroupId) {
-      return;
-    }
-
-    const sourceIndex = this.findGroupIndexById(this.draggedGroupId);
-    const targetIndex = this.findGroupIndexById(targetGroupId);
-    if (sourceIndex < 0 || targetIndex < 0) {
-      return;
-    }
-
-    const control = this.groups.at(sourceIndex);
-    this.groups.removeAt(sourceIndex);
-    const insertIndex = sourceIndex < targetIndex ? targetIndex : targetIndex;
-    this.groups.insert(insertIndex, control);
+    if (this.draggedGroupId == null || this.draggedGroupId === targetGroupId) return;
+    const si = this.findGroupIndexById(this.draggedGroupId);
+    const ti = this.findGroupIndexById(targetGroupId);
+    if (si < 0 || ti < 0) return;
+    const ctrl = this.groups.at(si);
+    this.groups.removeAt(si);
+    this.groups.insert(si < ti ? ti : ti, ctrl);
     this.syncState();
     this.draggedGroupId = null;
   }
 
-  onRowDragStart(event: DragEvent, groupId: number, rowId: number) {
-    console.log(event);
-    this.draggedRowData = { groupId, rowId, typ: this.getRows(this.findGroupIndexById(groupId)).at(this.findRowIndexById(this.findGroupIndexById(groupId), rowId)).value.typ };
-    console.log("DraggedRowData:", this.draggedRowData);
-    event.dataTransfer?.setData('text/plain', 'row');
-    event.dataTransfer?.setData('row-id', String(rowId));
-    event.dataTransfer?.setData('group-id', String(groupId));
-    event.dataTransfer!.effectAllowed = 'move';
-  }
-
-  onRowDragOver(event: DragEvent) {
-    event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-  }
-
-private insertDragControls(rows: FormArray, controls: AbstractControl[], targetIndex: number, options = { emitEvent: true }) {
-  const insertIndex = targetIndex < 0 ? rows.length : targetIndex;
-  this.moveControls(rows, controls, Math.min(insertIndex, rows.length), options);
+  onRowDragStart(event: DragEvent, groupId: number, rowId: number): void {
+  const gi = this.findGroupIndexById(groupId);
+  const ri = this.findRowIndexById(gi, rowId);
+  this.draggedRowData = { groupId, rowId, typ: this.getRows(gi).at(ri).value.typ };
+  event.dataTransfer?.setData('text/plain', 'row');
+  event.dataTransfer!.effectAllowed = 'move';
 }
 
- onRowDropToGroup(event: DragEvent, targetGroupId: number) {
+  onRowDragOver(event: DragEvent, groupId?: number, rowId?: number): void {
   event.preventDefault();
   event.stopPropagation();
-
-  if (!this.draggedRowData) return;
-
-  const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
-  const targetGroupIndex = this.findGroupIndexById(targetGroupId);
-  if (sourceGroupIndex < 0 || targetGroupIndex < 0) return;
-
-  const sourceRows = this.getRows(sourceGroupIndex);
-  const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
-  if (sourceRowIndex < 0) return;
-
-  const sourceRow = sourceRows.at(sourceRowIndex);
-  const targetRows = this.getRows(targetGroupIndex);
-  const NO_EMIT = { emitEvent: false };
-
-  if (this.draggedRowData.typ === 'misch' || this.draggedRowData.typ === 'gruppe') {
-    const block = this.extractRowBlock(sourceRows, sourceRow);
-    this.removeControls(sourceRows, new Set(block.map(ctrl => ctrl.value.id)), NO_EMIT);
-    this.insertDragControls(targetRows, block, targetRows.length, NO_EMIT);
-  } else {
-    sourceRow.get('parentMischId')?.setValue(null, { emitEvent: false });
-    sourceRow.get('parentGruppeId')?.setValue(null, { emitEvent: false });
-    sourceRows.removeAt(sourceRowIndex, NO_EMIT);
-    targetRows.insert(targetRows.length, sourceRow, NO_EMIT);
+  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+  if (this.dragOverGroupId !== (groupId ?? null) || this.dragOverRowId !== (rowId ?? null)) {
+    this.dragOverGroupId = groupId ?? null;
+    this.dragOverRowId   = rowId   ?? null;
+    this.cdr.markForCheck();
   }
+}
 
-  this.syncState();
-  this.computeKosten();
+  onRowDragLeave(event: DragEvent): void {
+  const related = event.relatedTarget as HTMLElement;
+  if (!related || !related.closest('tr')) {
+    this.dragOverGroupId = null;
+    this.dragOverRowId   = null;
+  }
   this.cdr.markForCheck();
-  this.draggedRowData = null;
 }
 
-onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number) {
+
+  onRowDragEnd(): void {
+    this.draggedRowData  = null;
+    this.dragOverGroupId = null;
+    this.dragOverRowId   = null;
+    this.cdr.markForCheck();
+  }
+
+  onRowDropToGroup(event: DragEvent, targetGroupId: number): void {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.draggedRowData) return;
+
+    const sgi = this.findGroupIndexById(this.draggedRowData.groupId);
+    const tgi = this.findGroupIndexById(targetGroupId);
+    if (sgi < 0 || tgi < 0) return;
+
+    const sourceRows  = this.getRows(sgi);
+    const sri         = this.findRowIndexById(sgi, this.draggedRowData.rowId);
+    if (sri < 0) return;
+
+    const sourceRow  = sourceRows.at(sri);
+    const targetRows = this.getRows(tgi);
+    const NO_EMIT    = { emitEvent: false };
+
+    if (this.draggedRowData.typ === 'misch' || this.draggedRowData.typ === 'gruppe') {
+      const block = this.extractRowBlock(sourceRows, sourceRow);
+      this.removeControls(sourceRows, new Set(block.map(c => c.value.id)), NO_EMIT);
+      this.moveControls(targetRows, block, targetRows.length, NO_EMIT);
+    } else {
+      sourceRow.get('parentMischId')?.setValue(null, NO_EMIT);
+      sourceRow.get('parentGruppeId')?.setValue(null, NO_EMIT);
+      sourceRows.removeAt(sri, NO_EMIT);
+      targetRows.insert(targetRows.length, sourceRow, NO_EMIT);
+    }
+
+    this.syncState();
+    this.computeKosten();
+    this.cdr.markForCheck();
+    this.draggedRowData = null;
+  }
+
+
+onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number): void {
   event.preventDefault();
   event.stopPropagation();
-
   if (!this.draggedRowData) return;
 
-  const sourceGroupIndex = this.findGroupIndexById(this.draggedRowData.groupId);
-  const targetGroupIndex = this.findGroupIndexById(targetGroupId);
-  if (sourceGroupIndex < 0 || targetGroupIndex < 0) return;
+  const sgi = this.findGroupIndexById(this.draggedRowData.groupId);
+  const tgi = this.findGroupIndexById(targetGroupId);
+  if (sgi < 0 || tgi < 0) return;
 
-  const sourceRows = this.getRows(sourceGroupIndex);
-  const targetRows = this.getRows(targetGroupIndex);
-  const sourceRowIndex = this.findRowIndexById(sourceGroupIndex, this.draggedRowData.rowId);
-  const targetRowIndex = this.findRowIndexById(targetGroupIndex, targetRowId);
-  if (sourceRowIndex < 0 || targetRowIndex < 0) return;
+  const sourceRows = this.getRows(sgi);
+  const targetRows = this.getRows(tgi);
+  const sri        = this.findRowIndexById(sgi, this.draggedRowData.rowId);
+  let tri        = this.findRowIndexById(tgi, targetRowId);
+  if (sri < 0 || tri < 0) return;
 
-  const NO_EMIT = { emitEvent: false };
-  const sourceRow = sourceRows.at(sourceRowIndex);
+  const NO_EMIT   = { emitEvent: false };
+  const sourceRow = sourceRows.at(sri);
 
+  // Entferne die gezogene Zeile aus der Quellgruppe
   if (sourceRow.value.typ === 'misch' || sourceRow.value.typ === 'gruppe') {
     const block = this.extractRowBlock(sourceRows, sourceRow);
-    const blockIds = new Set<number>(block.map(ctrl => ctrl.value.id));
-
+    const blockIds = new Set<number>(block.map(c => c.value.id));
     this.removeControls(sourceRows, blockIds, NO_EMIT);
-
-    let insertIndex = targetRowIndex;
-    if (sourceGroupIndex === targetGroupIndex && sourceRowIndex < targetRowIndex) {
-      insertIndex -= block.length;
-    }
-
-    this.insertDragControls(targetRows, block, Math.max(0, insertIndex), NO_EMIT);
-
+    let insertIndex = tri;
+    if (sgi === tgi && sri < tri) insertIndex -= block.length;
+    this.moveControls(targetRows, block, Math.max(0, insertIndex), NO_EMIT);
   } else {
-    const targetRowValue = targetRows.at(targetRowIndex).value;
+    // Entferne die Zeile aus der Quellgruppe
+    sourceRows.removeAt(sri, NO_EMIT);
+    if (sgi === tgi && sri < tri) tri--;
 
-    // insertIndex VOR removeAt berechnen
+    // Bestimme den Einfügeindex
+    const targetVal = targetRows.at(tri).value;
     let insertIndex: number;
-    if (targetRowValue.typ === 'misch' || targetRowValue.typ === 'gruppe') {
-      const targetChildIds = this.collectLinkedRowIds(targetRows, targetRowValue);
-      let lastChildIdx = targetRowIndex;
+
+    if (targetVal.typ === 'misch' || targetVal.typ === 'gruppe') {
+      const childIds = this.collectLinkedRowIds(targetRows, targetVal);
+      let lastChildIdx = tri;
       targetRows.controls.forEach((ctrl, idx) => {
-        if (idx > targetRowIndex && targetChildIds.has(ctrl.value.id)) {
-          lastChildIdx = idx;
-        }
+        if (idx > tri && childIds.has(ctrl.value.id)) lastChildIdx = idx;
       });
       insertIndex = lastChildIdx + 1;
     } else {
-      insertIndex = targetRowIndex;
+      insertIndex = tri;
     }
 
-    // Jetzt entfernen
-    sourceRows.removeAt(sourceRowIndex, NO_EMIT);
-
-    // Index korrigieren wenn gleiche Gruppe und source vor Ziel
-    if (sourceGroupIndex === targetGroupIndex && sourceRowIndex < insertIndex) {
-      insertIndex--;
-    }
-
-    // Parent-Referenzen setzen
-    if (targetRowValue.typ === 'misch') {
-      sourceRow.get('parentMischId')?.setValue(targetRowValue.id, { emitEvent: false });
-      sourceRow.get('parentGruppeId')?.setValue(null, { emitEvent: false });
-    } else if (targetRowValue.typ === 'gruppe') {
-      sourceRow.get('parentMischId')?.setValue(null, { emitEvent: false });
-      sourceRow.get('parentGruppeId')?.setValue(targetRowValue.id, { emitEvent: false });
+    // Füge die Zeile an der Zielposition ein
+    if (targetVal.typ === 'misch') {
+      sourceRow.get('parentMischId')?.setValue(targetVal.id, NO_EMIT);
+      sourceRow.get('parentGruppeId')?.setValue(null, NO_EMIT);
+    } else if (targetVal.typ === 'gruppe') {
+      sourceRow.get('parentMischId')?.setValue(null, NO_EMIT);
+      sourceRow.get('parentGruppeId')?.setValue(targetVal.id, NO_EMIT);
     } else {
-      sourceRow.get('parentMischId')?.setValue(null, { emitEvent: false });
-      sourceRow.get('parentGruppeId')?.setValue(null, { emitEvent: false });
+      const tMisch = targetVal.parentMischId ?? null;
+      const tGruppe = targetVal.parentGruppeId ?? null;
+     sourceRow.get('parentMischId')?.setValue(tMisch, NO_EMIT);
+      sourceRow.get('parentGruppeId')?.setValue(tGruppe, NO_EMIT);
     }
 
     targetRows.insert(Math.max(0, insertIndex), sourceRow, NO_EMIT);
@@ -801,91 +461,125 @@ onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number) {
   this.cdr.markForCheck();
   this.draggedRowData = null;
 }
-// Hilfsfunktion zur Aktualisierung der Parent-Referenzen
-updateParentReferences(row: any, mischId: number | null, gruppeId: number | null) {
-    row.get('parentMischId')?.setValue(mischId);
-    row.get('parentGruppeId')?.setValue(gruppeId);
-}
 
-  getGrandTotal() {
-    return this.groups.controls.reduce((sum, _, index) => {
-      return sum + this.getGroupTotal(index);
-    }, 0);
-  }
+  // ─── Aktionen ────────────────────────────────────────────────
 
-  materialKosten = 0;
-  lohnKosten = 0;
-  sonstigeKosten = 0;
-
-computeKosten() {
-  let material = 0;
-  let lohn = 0;
-  let sonstiges = 0;
-
-  this.groups.controls.forEach((groupCtrl) => {
-    const rows = (groupCtrl.get('rows') as FormArray).controls;
-
-    rows.forEach((r) => {
-      const val = r.value;
-
-      if (val.typ === 'misch') {
-        const mischMenge = Number(val.menge || 0);
-        const children = rows.filter(
-          c => c.value.parentMischId === val.id
-        );
-        children.forEach((child) => {
-          const childVal = child.value;
-          const kosten = mischMenge * Number(childVal.menge || 0) * Number(childVal.ek || 0);
-          if (childVal.typ === 'material') material += kosten;
-          else if (childVal.typ === 'lohn') lohn += kosten;
-          else if (childVal.typ === 'sonstiges') sonstiges += kosten;
-        });
-      } else if (val.typ === 'gruppe') {
-        // Gruppe selbst überspringen, Kinder werden via parentGruppeId separat behandelt
-      } else if (val.parentMischId == null && val.parentGruppeId == null) {
-        // Nur Top-Level-Rows ohne Parent normal berechnen
-        const kosten = Number(val.menge || 0) * Number(val.ek || 0);
-        if (val.typ === 'material') material += kosten;
-        else if (val.typ === 'lohn') lohn += kosten;
-        else if (val.typ === 'sonstiges') sonstiges += kosten;
-      }
-    });
-  });
-
-  this.materialKosten = material;
-  this.lohnKosten = lohn;
-  this.sonstigeKosten = sonstiges;
-}
-  async saveOffer() {
+  async saveOffer(): Promise<void> {
     try {
       await this.angebotService.save();
       alert('Angebot wurde gespeichert.');
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
+      console.error(e);
       alert('Angebot konnte nicht gespeichert werden.');
     }
   }
 
-  async createPdf() {
+  async createPdf(): Promise<void> {
     try {
       await this.angebotService.createPDF();
-    } catch (error) {
-      console.error(error);
+    } catch (e) {
+      console.error(e);
       alert('PDF konnte nicht erstellt werden.');
     }
   }
 
-  goBack() {
-    window.history.back();
+  goBack(): void { window.history.back(); }
+
+  // ─── Private Hilfsmethoden ───────────────────────────────────
+
+  private findGroupIndexById(id: number): number {
+    return this.groups.controls.findIndex(g => g.value.id === id);
   }
 
-  private syncState() {
+  private findRowIndexById(gi: number, rowId: number): number {
+    return this.getRows(gi).controls.findIndex(r => r.value.id === rowId);
+  }
+
+  private collectLinkedRowIds(rows: FormArray, rootRow: any): Set<number> {
+    const ids = new Set<number>([rootRow.id]);
+    let added = true;
+    while (added) {
+      added = false;
+      rows.controls.forEach((ctrl) => {
+        const r = ctrl.value;
+        if (!ids.has(r.id) &&
+          ((r.parentMischId  != null && ids.has(r.parentMischId))  ||
+           (r.parentGruppeId != null && ids.has(r.parentGruppeId)))) {
+          ids.add(r.id);
+          added = true;
+        }
+      });
+    }
+    return ids;
+  }
+
+  private extractRowBlock(rows: FormArray, rootRow: AbstractControl): AbstractControl[] {
+    const ids = this.collectLinkedRowIds(rows, rootRow.value);
+    return rows.controls.filter(c => ids.has(c.value.id));
+  }
+
+  private removeControls(rows: FormArray, ids: Set<number>, options = { emitEvent: true }): void {
+    rows.controls
+      .map((c, i) => ids.has(c.value.id) ? i : -1)
+      .filter(i => i >= 0)
+      .sort((a, b) => b - a)
+      .forEach(i => rows.removeAt(i, options));
+  }
+
+  private moveControls(rows: FormArray, controls: AbstractControl[], insertIndex: number, options = { emitEvent: true }): void {
+    controls.forEach((ctrl, offset) => rows.insert(insertIndex + offset, ctrl, options));
+  }
+
+  private syncState(): void {
     this.state.update({
-      angebot: {
-        ...this.state.value.angebot,
-        ...this.form.value,
-        haschange: true,
-      },
+      angebot: { ...this.state.value.angebot, ...this.form.value, haschange: true },
     });
+  }
+
+  private setupVorlagenListeners(): void {
+    this.form.get('vorlageEinleitungId')?.valueChanges.subscribe((id) => {
+      const v = this.loader.vorlageneinleitung().find((x: any) => x.id === id || x.ID === id);
+      const val = v?.text || v?.content || '';
+      this.form.patchValue({ einleitung: val }, { emitEvent: false });
+      if (this.einleitungQuill) this.einleitungQuill.root.innerHTML = val;
+    });
+
+    this.form.get('vorlageSchlussId')?.valueChanges.subscribe((id) => {
+      const v = this.loader.vorlagenschluss().find((x: any) => x.id === id || x.ID === id);
+      const val = v?.text || v?.content || '';
+      this.form.patchValue({ schluss: val }, { emitEvent: false });
+      if (this.schlussQuill) this.schlussQuill.root.innerHTML = val;
+    });
+  }
+
+  private initQuillEditors(): void {
+    const ein = document.getElementById('einleitungEditor');
+    const sch = document.getElementById('schlussEditor');
+
+    const init = (QuillCtor: any) => {
+      if (ein) {
+        this.einleitungQuill = new QuillCtor(ein, { theme: 'snow' });
+        this.einleitungQuill.on('text-change', () => {
+          this.form.patchValue({ einleitung: ein.querySelector('.ql-editor')?.innerHTML || '' }, { emitEvent: false });
+        });
+        this.einleitungQuill.root.innerHTML = this.form.value.einleitung || '';
+      }
+      if (sch) {
+        this.schlussQuill = new QuillCtor(sch, { theme: 'snow' });
+        this.schlussQuill.on('text-change', () => {
+          this.form.patchValue({ schluss: sch.querySelector('.ql-editor')?.innerHTML || '' }, { emitEvent: false });
+        });
+        this.schlussQuill.root.innerHTML = this.form.value.schluss || '';
+      }
+    };
+
+    if (typeof (window as any).Quill !== 'undefined') {
+      init((window as any).Quill);
+      return;
+    }
+
+    import('quill')
+      .then((m) => init((m as any).default || m))
+      .catch((e) => console.warn('Quill not available', e));
   }
 }

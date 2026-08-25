@@ -148,20 +148,28 @@
                       <th></th>
                     </tr>
                   </thead>
-                  <tbody formArrayName="rows" (dragover)="onRowDragOver($event)"
-                    (drop)="onRowDropToGroup($event, group.value.id)">
+                  <tbody
+  formArrayName="rows"
+  (dragover)="onRowDragOver($event)"
+  (dragleave)="onRowDragLeave($event)"
+  (drop)="onRowDropToGroup($event, group.value.id)"
+>
                     @for (row of getRowsFromGroup(group).controls; track row.value.id; let rowIndex = $index) {
                     @if (!isChildRow(row.value)) {
-                    <tr [formGroup]="$any(row)" draggable="true" (dragover)="onRowDragOver($event)"
-                      (drop)="onRowDrop($event, group.value.id, row.value.id)" (dragend)="onRowDragEnd()"
-                      [class.child-row]="isMixChild(row.value) || isGroupChild(row.value)">
+                    <tr [formGroup]="$any(row)" draggable="true" 
+                      (drop)="onRowDrop($event, group.value.id, row.value.id)" 
+                      (dragend)="onRowDragEnd()"
+                        (dragover)="onRowDragOver($event, group.value.id, row.value.id)"
+                        (dragleave)="onRowDragLeave($event)"
+                      [class.child-row]="isMixChild(row.value) || isGroupChild(row.value)"
+                      [class.drag-over]="isDragOver(group.value.id, row.value.id)">
                       <td class="dragicon" (dragstart)="onRowDragStart($event, group.value.id, row.value.id)">
                         <img src="/assets/drag-handle.svg" alt="Drag handle" />
                       </td>
                       @if (row.value.typ === 'gruppe'){
                       <td></td>
                       }@else {
-<td>{{ groupIndex + 1  }}.{{ getRowDisplayNumber(group, row.value.id) }}</td>
+                        <td>{{ groupIndex + 1  }}.{{ getRowDisplayNumber(group, row.value.id) }}</td>
                       }
                       
                       <td>
@@ -205,10 +213,16 @@
                     @if ((row.value.typ === 'misch' || row.value.typ === 'gruppe') && !row.value.collapsed) {
                     @for (childRow of getChildRowControls(group, row); track childRow.value.id; let mischIndex = $index)
                     {
-                    <tr [formGroup]="childRow" draggable="true"
-                      
-                      (dragover)="onRowDragOver($event)" (drop)="onRowDrop($event, group.value.id, childRow.value.id)"
-                      (dragend)="onRowDragEnd()" class="row-child">
+                   <tr
+  [formGroup]="childRow"
+  draggable="true"
+  (dragover)="onRowDragOver($event, group.value.id, childRow.value.id)"
+  (dragleave)="onRowDragLeave($event)"
+  (drop)="onRowDrop($event, group.value.id, childRow.value.id)"
+  (dragend)="onRowDragEnd()"
+  [class.drag-over]="isDragOver(group.value.id, childRow.value.id)"
+  class="row-child"
+>
                       <td class="dragicon" (dragstart)="onRowDragStart($event, group.value.id, row.value.id)">
                         <img src="/assets/drag-handle.svg" alt="Drag handle" />
                       </td>
