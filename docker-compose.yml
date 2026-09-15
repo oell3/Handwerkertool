@@ -6,7 +6,7 @@ services:
       - "8089:80"
     environment:
       - PORT=80
-      - BACKEND_URL=http://backend:3000   # ← Service-Name des externen Backends
+      #- BACKEND_URL=http://backend:3000   # ← Service-Name des externen Backends
     restart: unless-stopped
     networks:
       - crm-network
