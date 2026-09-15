@@ -18,6 +18,16 @@ export interface Kunde {
   mandant_id?: string;
 }
 
+export interface Projekte{
+  id: Number,
+  ID?: String|Number
+}
+
+export interface Ansprechpartner{
+  id: String,
+  ID?: String|Number
+}
+
 export interface DraggedRowData {
   groupId: number;
   rowId: number;

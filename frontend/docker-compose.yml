@@ -1,0 +1,20 @@
+services:
+  angular-app:
+    build: .
+    container_name: crm
+    ports:
+      - "8080:80"          # hostPort:server.port
+    environment:
+      - PORT=80
+      - BACKEND_URL=http://backend:3000
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  # Beispiel-Backend (durch dein echtes Backend ersetzen)
+  backend:
+    image: my-backend:latest
+    container_name: my-backend
+    expose:
+      - "3000"
+    restart: unless-stopped

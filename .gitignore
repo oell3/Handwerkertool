@@ -1,5 +1,22 @@
-.github
-.vscode
-node_modules
-.continue
+# Node
+node_modules/
+npm-debug.log*
+# Angular Build
+dist/
+.angular/
+out-tsc/
+
+# Tests
+coverage/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
 

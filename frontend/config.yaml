@@ -1,0 +1,25 @@
+app:
+  name: crm
+  environment: production
+
+server:
+  # Port, auf dem Nginx im Container lauscht
+  port: 80
+  # Port, auf dem die App auf dem Host erreichbar ist
+  hostPort: 8080
+
+backend:
+  # URL des Backends (aus Sicht des Containers!)
+  # Bei docker-compose: Service-Name + interner Port
+  url: http://backend:3000
+  # Falls Backend auf dem Host läuft: http://host.docker.internal:3000
+
+build:
+  configuration: production
+  # Angular-Projekt heißt "Crm" → Output in dist/crm/browser
+  outputPath: dist/crm/browser
+
+docker:
+  imageName: crm
+  imageTag: latest
+  containerName: crm

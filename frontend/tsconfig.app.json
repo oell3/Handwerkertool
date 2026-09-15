@@ -2,16 +2,16 @@
 /* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 
 {
-"rootDir": "./src",
- "extends": "./tsconfig.json",
- "compilerOptions": {
- "outDir": "./src",
- "types": []
-},
-"include": [
-"src/**/*.ts"
-],
-"exclude": [
-"src/**/*.spec.ts"
-]
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "types": []
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.spec.ts"
+  ]
 }

@@ -1,5 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { Kunde } from '../angebotserstellung.types';
+import { Kunde, Projekte, Ansprechpartner } from '../angebotserstellung.types';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '@env/environment';
 
 @Injectable({ providedIn: 'root' })
 export class DataLoaderService {
@@ -14,6 +17,10 @@ export class DataLoaderService {
   private allProjekte: any[]         = [];
   private allAnsprechpartner: any[]  = [];
 
+  private readonly apiUrl = environment.apiUrl;
+
+  constructor(private http: HttpClient) {};
+ 
   async loadAll(): Promise<void> {
     await Promise.all([
       this.loadKunden(),
@@ -40,50 +47,69 @@ export class DataLoaderService {
 
   private async loadKunden(): Promise<void> {
     try {
-      const res  = await fetch('/api/kunden');
-      const data = await res.json();
-      if (!res.ok) return;
-      this.kunden.set(
-        data.map((k: any) => ({ ...k, id: String(k.id ?? k.ID ?? ''), name: k.name ?? k.Name ?? '' }))
-      );
-    } catch (e) { console.warn('kunden load failed', e); }
+      const data = await firstValueFrom(
+      this.http.get<Kunde[]>(`${this.apiUrl}/projekte`)
+    );
+    this.kunden.set(
+    data.map((k: Kunde) => ({
+              ...k,
+              id: String(k.id ?? k.ID ?? ''),
+              name: k.name ?? k.Name ?? '',
+                            })))
+    } catch (e) { console.error('kunden load failed', e); }
   }
 
   private async loadVorlagen(): Promise<void> {
-    try {
-      const res  = await fetch('/api/vorlagen');
-      const data = await res.json();
-      if (!res.ok) return;
-      this.vorlageneinleitung.set([...data.einleitung]);
-      this.vorlagenschluss.set([...data.schluss]);
-    } catch (e) { console.warn('vorlagen load failed', e); }
+  try {
+    const [schluss, einleitung] = await Promise.all([
+      firstValueFrom(this.http.get<any[]>(`${this.apiUrl}/vorlagen/schluss`)),
+      firstValueFrom(this.http.get<any[]>(`${this.apiUrl}/vorlagen/einleitung`)),
+    ]);
+    this.vorlagenschluss.set(schluss);
+    this.vorlageneinleitung.set(einleitung);
+  } catch (e) {
+    console.error('Vorlagen load failed', e);
   }
+}
 
   private async loadObjekte(): Promise<void> {
-    try {
-      const res = await fetch('/api/objekte');
-      if (!res.ok) return;
-      const data       = await res.json();
-      this.allObjekte  = [...data.objekte];
-      this.objekte.set([...this.allObjekte]);
-    } catch (e) { console.warn('objekte load failed', e); }
+  try {
+    const data = await firstValueFrom(
+      this.http.get<any[]>(`${this.apiUrl}/objekte`)
+    );
+    this.allObjekte = data;   // ← wichtig für filterByKunde()
+    this.objekte.set(data);
+  } catch (e) {
+    console.error('Objekte load failed', e);
   }
+}
 
   private async loadProjekte(): Promise<void> {
     try {
-      const res = await fetch('/api/projekte');
-      if (!res.ok) return;
-      this.allProjekte = await res.json();
-      this.projekte.set([...this.allProjekte]);
-    } catch (e) { console.warn('projekte load failed', e); }
+      const data = await firstValueFrom(
+      this.http.get<Projekte[]>(`${this.apiUrl}/kunden`)
+    );
+    this.projekte.set(
+    data.map((k: Projekte) => ({
+              ...k,
+              id: String(k.id ?? k.ID ?? '')
+                            })))
+    } catch (e) { console.error('Projekte load failed', e); }
   }
 
   private async loadAnsprechpartner(): Promise<void> {
     try {
-      const res = await fetch('/api/ansprechpartner');
-      if (!res.ok) return;
-      this.allAnsprechpartner = await res.json();
-      this.ansprechpartner.set([...this.allAnsprechpartner]);
-    } catch (e) { console.warn('ansprechpartner load failed', e); }
+    const data = await firstValueFrom(
+      this.http.get<Ansprechpartner[]>(`${this.apiUrl}/ansprechpartner`)
+    );
+    this.ansprechpartner.set(
+      data.map((k: Ansprechpartner) => ({
+        ...k,
+        id: String(k.id ?? k.ID ?? ''),
+      }))
+    );
+  } catch (e) {
+    console.error('Ansprechpartner load failed', e);
   }
+}
 }
