@@ -3,18 +3,14 @@ services:
     build: .
     container_name: crm
     ports:
-      - "8080:80"          # hostPort:server.port
+      - "8080:80"
     environment:
       - PORT=80
-      - BACKEND_URL=http://backend:3000
+      - BACKEND_URL=http://backend:3000   # ← Service-Name des externen Backends
     restart: unless-stopped
-    depends_on:
-      - backend
+    networks:
+      - crm-network
 
-  # Beispiel-Backend (durch dein echtes Backend ersetzen)
-  backend:
-    image: my-backend:latest
-    container_name: my-backend
-    expose:
-      - "3000"
-    restart: unless-stopped
+networks:
+  crm-network:
+    external: true   # ← existierendes Netzwerk, in dem auch das Backend läuft
