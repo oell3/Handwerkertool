@@ -3,7 +3,7 @@ services:
     build: .
     container_name: crm
     ports:
-      - "8080:80"
+      - "8085:80"
     environment:
       - PORT=80
       - BACKEND_URL=http://backend:3000   # ← Service-Name des externen Backends

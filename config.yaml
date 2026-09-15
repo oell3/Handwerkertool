@@ -6,7 +6,7 @@ server:
   # Port, auf dem Nginx im Container lauscht
   port: 80
   # Port, auf dem die App auf dem Host erreichbar ist
-  hostPort: 8080
+  hostPort: 8085
 
 backend:
   # URL des Backends (aus Sicht des Containers!)
