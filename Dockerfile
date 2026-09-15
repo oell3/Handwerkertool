@@ -4,11 +4,11 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 # Nur die package-Dateien aus dem Angularfolder kopieren
-COPY Angularfolder/package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci
 
 # Restlichen Angular-Code kopieren und bauen
-COPY Angularfolder/ ./
+COPY frontend/ ./
 RUN npm run build -- --configuration production
 
 # ---------- Stage 2: Runtime (Nginx) ----------
