@@ -11,8 +11,6 @@ In Portainer unter `Stacks -> <Stack> -> Environment variables` eintragen:
 | `HOST_PORT` | `8089` | Port des Pi, unter dem die Anwendung erreichbar ist |
 | `CONTAINER_PORT` | `80` | Interner Nginx-Port |
 | `CONTAINER_NAME` | `crm` | Containername |
-| `IMAGE_NAME` | `crm` | Image-Name |
-| `IMAGE_TAG` | `latest` | Image-Tag |
 | `BACKEND_HOST` | `backend` | DNS-Name oder IP des Backends im Docker-Netzwerk |
 | `BACKEND_PORT` | `3000` | Interner Port des Backends |
 | `BACKEND_PATH` | leer | Optionaler URL-Pfad des Backends, z. B. `/api` |
@@ -36,6 +34,6 @@ Das Backend muss mit diesem Netzwerk verbunden sein und unter `BACKEND_HOST` und
 
 ## Automatischer Redeploy
 
-Im Portainer-Git-Stack den Webhook aktivieren und als Update-Verhalten das erneute Bauen des Images aus dem Repository verwenden. Nach einem Push laedt Portainer den neuen Commit, baut das Frontend-Image neu und startet den Stack mit den in Portainer gespeicherten Variablen.
+Im Portainer-Git-Stack den Webhook aktivieren und das erneute Bauen des Images aus dem Repository einschalten. Nach einem Push laedt Portainer den neuen Commit, baut das Frontend-Image aus dem `Dockerfile` und startet den Stack mit den in Portainer gespeicherten Variablen. Es ist kein Docker-Hub-Login und kein Registry-Image namens `crm:latest` erforderlich.
 
 Die Stack-Variablen bleiben bei Git-Updates erhalten. Sie muessen nicht in das Repository committed werden.
