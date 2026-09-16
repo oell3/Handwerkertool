@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '@env/environment';
 
 @Injectable({
   providedIn: 'root',
@@ -7,9 +8,10 @@ import { HttpClient } from '@angular/common/http';
 export class AuthService {
   private loggedIn = false;
   private http = inject(HttpClient);
+  private readonly apiUrl = environment.apiUrl.replace(/\/$/, '');
 
   checkAuth() {
-    return this.http.get('/api/auth/status', {
+    return this.http.get(`${this.apiUrl}/auth/status`, {
       withCredentials: true
     });
   }
@@ -24,7 +26,7 @@ export class AuthService {
 
   login(email: string, password: string) {
     return this.http.post(
-      '/api/user/login',
+      `${this.apiUrl}/user/login`,
       {
         email,
         password,
@@ -37,7 +39,7 @@ export class AuthService {
 
   refresh() {
     return this.http.post(
-      '/api/user/refresh',
+      `${this.apiUrl}/user/refresh`,
       {},
       {
         withCredentials: true,
@@ -49,7 +51,7 @@ export class AuthService {
     this.loggedIn = false;
 
     return this.http.post(
-      '/api/user/logout',
+      `${this.apiUrl}/user/logout`,
       {},
       {
         withCredentials: true,
