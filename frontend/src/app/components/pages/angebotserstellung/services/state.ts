@@ -82,7 +82,7 @@ export class StateService {
 
   nextGroupId(): number { return ++this._groupCounter; }
   nextRowId():   number { return ++this._rowCounter; }
-
+//
   reset(): void {
     this._state.set(INITIAL);
     this._groupCounter = 0;
