@@ -119,7 +119,7 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
         ),
       })
     );
-
+    //test
     this.form = this.fb.group({
       title:               [this.state.value.angebot.title || ''],
       einleitung:          [this.state.value.angebot.einleitung || ''],
