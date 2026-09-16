@@ -13,7 +13,10 @@ In Portainer unter `Stacks -> <Stack> -> Environment variables` eintragen:
 | `CONTAINER_NAME` | `crm` | Containername |
 | `IMAGE_NAME` | `crm` | Image-Name |
 | `IMAGE_TAG` | `latest` | Image-Tag |
-| `BACKEND_URL` | `http://backend:3000` | Backend-Adresse aus dem Docker-Netzwerk |
+| `BACKEND_HOST` | `backend` | DNS-Name oder IP des Backends im Docker-Netzwerk |
+| `BACKEND_PORT` | `3000` | Interner Port des Backends |
+| `BACKEND_PATH` | leer | Optionaler URL-Pfad des Backends, z. B. `/api` |
+| `BACKEND_URL` | leer | Optionaler vollständiger Override, z. B. `http://backend:3000/api` |
 | `DOCKER_NETWORK` | `crm-network` | Bereits vorhandenes externes Docker-Netzwerk |
 | `RESTART_POLICY` | `unless-stopped` | Neustartverhalten |
 
@@ -29,7 +32,7 @@ docker network create crm-network
 
 Wenn das Netzwerk bereits existiert, darf dieser Befehl nicht erneut ausgefuehrt werden.
 
-Das Backend muss mit diesem Netzwerk verbunden sein und unter `BACKEND_URL` erreichbar sein.
+Das Backend muss mit diesem Netzwerk verbunden sein und unter `BACKEND_HOST` und `BACKEND_PORT` erreichbar sein. Für einen Backend-Pfad kann `BACKEND_PATH` gesetzt werden. `BACKEND_URL` überschreibt diese drei Werte vollständig.
 
 ## Automatischer Redeploy
 
