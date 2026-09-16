@@ -13,7 +13,7 @@ services:
       BACKEND_URL: ${BACKEND_URL:-http://backend:3000}
     restart: ${RESTART_POLICY:-unless-stopped}
     networks:
-      - ${DOCKER_NETWORK:-crm-network}
+      - crm-network
 
 networks:
   ${DOCKER_NETWORK:-crm-network}:
