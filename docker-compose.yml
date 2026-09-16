@@ -1,16 +1,20 @@
 services:
   angular-app:
-    build: .
-    container_name: crm
+    build:
+      context: .
+      args:
+        CONTAINER_PORT: ${CONTAINER_PORT:-80}
+    image: ${IMAGE_NAME:-crm}:${IMAGE_TAG:-latest}
+    container_name: ${CONTAINER_NAME:-crm}
     ports:
-      - "8089:80"
+      - "${HOST_PORT:-8089}:${CONTAINER_PORT:-80}"
     environment:
-      - PORT=80
-      - BACKEND_URL=http://backend:3000   # ← Service-Name des externen Backends
-    restart: unless-stopped
+      PORT: ${CONTAINER_PORT:-80}
+      BACKEND_URL: ${BACKEND_URL:-http://backend:3000}
+    restart: ${RESTART_POLICY:-unless-stopped}
     networks:
-      - crm-network
+      - ${DOCKER_NETWORK:-crm-network}
 
 networks:
-  crm-network:
-    external: true   # ← existierendes Netzwerk, in dem auch das Backend läuft
+  ${DOCKER_NETWORK:-crm-network}:
+    external: true

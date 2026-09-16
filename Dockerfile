@@ -21,10 +21,12 @@ COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 # Pfad ggf. an deinen Projektnamen anpassen (dist/<projektname>/browser)
 COPY --from=build /app/dist/*/browser /usr/share/nginx/html
 
-# Standardwerte (können per ENV überschrieben werden)
-ENV PORT=80
+ARG CONTAINER_PORT=80
+
+# Standardwerte; docker-compose überschreibt sie über die .env-Werte.
+ENV PORT=${CONTAINER_PORT}
 ENV BACKEND_URL=http://backend:3000
 
-EXPOSE 80
+EXPOSE ${CONTAINER_PORT}
 
 CMD ["nginx", "-g", "daemon off;"]
