@@ -37,3 +37,5 @@ Das Backend muss mit diesem Netzwerk verbunden sein und unter `BACKEND_HOST` und
 Im Portainer-Git-Stack den Webhook aktivieren und das erneute Bauen des Images aus dem Repository einschalten. Nach einem Push laedt Portainer den neuen Commit, baut das Frontend-Image aus dem `Dockerfile` und startet den Stack mit den in Portainer gespeicherten Variablen. Es ist kein Docker-Hub-Login und kein Registry-Image namens `crm:latest` erforderlich.
 
 Die Stack-Variablen bleiben bei Git-Updates erhalten. Sie muessen nicht in das Repository committed werden.
+
+Nach einer Aenderung an `BACKEND_HOST`, `BACKEND_PORT`, `BACKEND_PATH` oder `BACKEND_URL` muss der Stack neu deployed beziehungsweise der Container neu erstellt werden. Ein einfacher Neustart eines bestehenden Containers uebernimmt geaenderte Compose-Environment-Werte nicht.
