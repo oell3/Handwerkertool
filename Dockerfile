@@ -26,6 +26,9 @@ ARG CONTAINER_PORT=80
 # Standardwerte; docker-compose überschreibt sie über die .env-Werte.
 ENV PORT=${CONTAINER_PORT}
 ENV BACKEND_URL=http://backend:3000
+# Nur diese beiden Variablen werden im Nginx-Template ersetzt. Nginx-eigene
+# Variablen wie $host, $uri und $scheme bleiben dadurch unverändert.
+ENV NGINX_ENVSUBST_VARS='$PORT $BACKEND_URL'
 
 EXPOSE ${CONTAINER_PORT}
 
