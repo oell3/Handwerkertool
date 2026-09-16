@@ -468,7 +468,7 @@ onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number): void {
   async saveOffer(): Promise<void> {
     try {
       this.syncState();
-      await this.angebotService.save();
+      await this.angebotService.save(this.state.value.angebot);
       alert('Angebot wurde gespeichert.');
     } catch (e) {
       console.error(e);
@@ -535,7 +535,7 @@ onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number): void {
 
   private syncState(): void {
     this.state.update({
-      angebot: { ...this.state.value.angebot, ...this.form.value, haschange: true },
+      angebot: { ...this.state.value.angebot, ...this.form.getRawValue(), haschange: true },
     });
   }
 

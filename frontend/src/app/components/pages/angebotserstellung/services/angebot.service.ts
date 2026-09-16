@@ -7,13 +7,13 @@ export class AngebotService {
   private readonly state = inject(StateService);
   private readonly apiUrl = environment.apiUrl;
 
-  async save(): Promise<void> {
-    console.log(this.state.value.angebot);
+  async save(angebot = this.state.value.angebot): Promise<void> {
+    console.log(angebot);
     const res = await fetch(`${this.apiUrl}/angebot/save`, {
       credentials: 'include',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(this.state.value.angebot),
+      body: JSON.stringify(angebot),
       
     });
 
