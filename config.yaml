@@ -8,10 +8,10 @@ server:
   # Port, auf dem die App auf dem Host erreichbar ist
   hostPort: 8089
 
-#backend:
-  # URL des Backends (aus Sicht des Containers!)
-  # Bei docker-compose: Service-Name + interner Port
-#  url: http://backend:3000
+backend:
+  #URL des Backends (aus Sicht des Containers!)
+  #Bei docker-compose: Service-Name + interner Port
+   url: http://host.docker.internal:3000
   # Falls Backend auf dem Host läuft: http://host.docker.internal:3000
 
 build:
