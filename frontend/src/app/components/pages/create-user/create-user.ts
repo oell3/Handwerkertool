@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, FormGroup } from '@angular/forms';
+import { environment } from '@env/environment';
 
 interface Vorlage {
   id: number;
@@ -19,6 +20,7 @@ interface Vorlage {
 export class CreateUserComponent implements OnInit {
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
+  private readonly apiUrl = environment.apiUrl;
 
   registerForm: FormGroup = this.fb.group({
     name: [''],
@@ -33,7 +35,7 @@ export class CreateUserComponent implements OnInit {
 
   public createUser(): void {
     this.http
-      .post('http://localhost:8080/login', this.registerForm.value, {
+      .post(`${this.apiUrl}/login`, this.registerForm.value, {
         observe: 'response',
         withCredentials: true,
       })
@@ -51,7 +53,7 @@ export class CreateUserComponent implements OnInit {
 
   public vorlageSchluss(): void {
     this.http
-      .get<Vorlage[]>('http://localhost:8080/api/vorlage/einleitung', {
+      .get<Vorlage[]>(`${this.apiUrl}/vorlage/einleitung`, {
         withCredentials: true,
       })
       .subscribe({

@@ -1,13 +1,15 @@
 import { Injectable, inject } from '@angular/core';
 import { StateService } from './state';
+import { environment } from '@env/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AngebotService {
   private readonly state = inject(StateService);
+  private readonly apiUrl = environment.apiUrl;
 
   async save(): Promise<void> {
     console.log(this.state.value.angebot);
-    const res = await fetch('https://localhost:7036/api/angebot/save', {
+    const res = await fetch(`${this.apiUrl}/angebot/save`, {
       credentials: 'include',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -24,7 +26,7 @@ export class AngebotService {
   }
 
   async createPDF(): Promise<void> {
-    const res = await fetch('/api/offer/create', {
+    const res = await fetch(`${this.apiUrl}/offer/create`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(this.state.value.angebot),
