@@ -122,6 +122,7 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
     //test
     this.form = this.fb.group({
       title:               [this.state.value.angebot.title || ''],
+      angebotsdatum:       [this.state.value.angebot.angebotsdatum || ''],
       einleitung:          [this.state.value.angebot.einleitung || ''],
       schluss:             [this.state.value.angebot.schluss || ''],
       kundenId:            [(this.state.value.angebot as any).kundenId || null],

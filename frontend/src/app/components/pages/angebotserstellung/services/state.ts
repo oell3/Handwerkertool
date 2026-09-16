@@ -27,6 +27,7 @@ export interface AngebotGroup {
 
 export interface AngebotData {
   title: string;
+  angebotsdatum: string;
   einleitung: string;
   schluss: string;
   kundenId: string | null;
@@ -48,6 +49,7 @@ export interface AppState {
 const INITIAL: AppState = {
   angebot: {
     title: '',
+    angebotsdatum: '',
     einleitung: '',
     schluss: '',
     kundenId: null,
