@@ -127,6 +127,7 @@ export class AngebotserstellungComponent implements OnInit, AfterViewInit {
       kundenId:            [(this.state.value.angebot as any).kundenId || null],
       objektId:            [(this.state.value.angebot as any).objektId || null],
       projektId:           [(this.state.value.angebot as any).projektId || null],
+      anrede:              [(this.state.value.angebot as any).anrede || ''],
       ansprechpartnerId:   [(this.state.value.angebot as any).ansprechpartnerId || null],
       vorlageEinleitungId: [(this.state.value.angebot as any).vorlageEinleitungId || null],
       vorlageSchlussId:    [(this.state.value.angebot as any).vorlageSchlussId || null],
@@ -466,6 +467,7 @@ onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number): void {
 
   async saveOffer(): Promise<void> {
     try {
+      this.syncState();
       await this.angebotService.save();
       alert('Angebot wurde gespeichert.');
     } catch (e) {
@@ -476,6 +478,7 @@ onRowDrop(event: DragEvent, targetGroupId: number, targetRowId: number): void {
 
   async createPdf(): Promise<void> {
     try {
+      this.syncState();
       await this.angebotService.createPDF();
     } catch (e) {
       console.error(e);
