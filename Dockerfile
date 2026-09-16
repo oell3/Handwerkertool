@@ -14,8 +14,8 @@ RUN npm run build -- --configuration production
 # ---------- Stage 2: Runtime (Nginx) ----------
 FROM nginx:alpine
 
-# Nginx-Template (Port + Backend-URL werden zur Laufzeit ersetzt)
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+# Nginx-Template: Port und Backend-URL werden zur Laufzeit ersetzt.
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 # Gebaute Angular-App kopieren
 # Pfad ggf. an deinen Projektnamen anpassen (dist/<projektname>/browser)
