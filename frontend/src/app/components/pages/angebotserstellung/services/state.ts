@@ -74,6 +74,7 @@ export class StateService {
   get value(): AppState {
     return this._state();
   }
+  //
 
   update(partial: Partial<AppState>): void {
     this._state.update((s) => ({ ...s, ...partial }));
