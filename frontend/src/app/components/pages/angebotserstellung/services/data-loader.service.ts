@@ -48,14 +48,17 @@ export class DataLoaderService {
   private async loadKunden(): Promise<void> {
     try {
       const data = await firstValueFrom(
-      this.http.get<Kunde[]>(`${this.apiUrl}/projekte`)
-    );
-    this.kunden.set(
-    data.map((k: Kunde) => ({
-              ...k,
-              id: String(k.id ?? k.ID ?? ''),
-              name: k.name ?? k.Name ?? '',
-                            })))
+        this.http.get<Kunde[]>(`${this.apiUrl}/kunden`)
+      );
+      this.kunden.set(
+        data
+          .filter((k) => k?.id != null || k?.ID != null)
+          .map((k: Kunde) => ({
+            ...k,
+            id: String(k.id ?? k.ID ?? ''),
+            name: k.name ?? k.Name ?? '',
+          }))
+      );
     } catch (e) { console.error('kunden load failed', e); }
   }
 
