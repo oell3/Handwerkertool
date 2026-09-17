@@ -87,7 +87,7 @@ export class DataLoaderService {
   private async loadProjekte(): Promise<void> {
     try {
       const data = await firstValueFrom(
-      this.http.get<Projekte[]>(`${this.apiUrl}/kunden`)
+      this.http.get<Projekte[]>(`${this.apiUrl}/kunden/angebot`)
     );
     this.projekte.set(
     data.map((k: Projekte) => ({

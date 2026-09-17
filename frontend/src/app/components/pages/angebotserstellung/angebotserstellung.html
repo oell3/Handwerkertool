@@ -20,7 +20,7 @@
           <div class="meta-grid">
             <label>
               Kunde
-              <select formControlName="kundenId">
+              <select class="select-control" formControlName="kundenId">
                 <option [value]="">— Kunde wählen —</option>
                 @for (k of kunden(); track k.id ?? k.ID) {
                 <option [value]="k.id || k.ID">{{ k.name || k.Name }}</option>
@@ -30,7 +30,7 @@
 
             <label>
               Ansprechpartner
-              <select formControlName="ansprechpartnerId">
+              <select class="select-control" formControlName="ansprechpartnerId">
                 <option [value]="">— Ansprechpartner wählen —</option>
                 @for (a of ansprechpartner(); track a.id ?? a.ID) {
                 <option [value]="a.id || a.ID">{{ a.Name || a.name }}</option>
@@ -40,7 +40,7 @@
 
             <label>
               Objekt
-              <select formControlName="objektId">
+              <select class="select-control" formControlName="objektId">
                 <option [value]="">— Objekt wählen —</option>
                 @for (o of objekte(); track o.id ?? o.ID) {
                 <option [value]="o.id || o.ID">{{ o.adresse }} {{ o.plz }} {{ o.stadt }}</option>
@@ -50,7 +50,7 @@
 
             <label>
               Projekt
-              <select formControlName="projektId">
+              <select class="select-control" formControlName="projektId">
                 <option [value]="">— Projekt wählen —</option>
                 @for (p of projekte(); track p.id ?? p.ID) {
                 <option [value]="p.id || p.ID">{{ p.ID || p.name || p.Bezeichnung }}</option>
@@ -86,7 +86,7 @@
           <div class="meta-grid">
             <label>
               Vorlage Einleitung
-              <select formControlName="vorlageEinleitungId" (change)="
+              <select class="select-control" formControlName="vorlageEinleitungId" (change)="
                   form.patchValue({
                     einleitung:
                       (vorlageneinleitung().find((v) => v.id == form.value.vorlageEinleitungId) || {}).text ||
@@ -296,7 +296,7 @@
           <div class="meta-grid">
             <label>
               Vorlage Schluss
-              <select formControlName="vorlageSchlussId" (change)="
+              <select class="select-control" formControlName="vorlageSchlussId" (change)="
                   form.patchValue({
                     schluss:
                       (vorlagenschluss().find((v) => v.id == form.value.vorlageSchlussId) || {}).text || '',
